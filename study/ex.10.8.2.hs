@@ -20,7 +20,6 @@ rest Nil = Nothing
 rest (Cons a Nil) = Nothing
 rest (Cons a ax) = Just ax
 
-
 -- -- ’²¸ start
 -- data Show a => Ueki a = Ueki a
 -- instance Show a => Show (Ueki a) where
@@ -29,12 +28,35 @@ rest (Cons a ax) = Just ax
 -- -- end
 
 -- Tree
-data {-Num a =>-} Tree a = Leaf a |Node (Tree a) (Tree a)
-occurs :: Num a => a -> Tree a -> Bool
+data {-Ord a =>-} Tree a = Leaf a |Node (Tree a) (Tree a) deriving (Show)
+occurs :: Ord a => a -> Tree a -> Bool
 occurs a (Leaf a') = (==) a a'
-occurs a (Node first second) = occurs a first || occurs a second
+occurs a (Node fst snd) = occurs a fst || occurs a snd
 t1 = Leaf 1
 t2 = Leaf 2
 t3 = Node t1 t2
--- unfold :: (a -> (a, b)) -> (a -> Bool) -> a -> [b]
--- unfold fun fil init = case of 
+t1' = Leaf 1
+t1'' = Leaf 1
+t4 = Node t1' t3
+t5 = Node t1'' t4
+count :: Tree a -> Int
+count (Leaf a) = 1
+count (Node a a') = (count a) + (count a')
+balanced :: Tree a -> Bool
+balanced (Leaf _) = True
+balanced (Node a a') = if check left right
+                       then (balanced a) && (balanced a')
+                       else False
+                         where 
+                           check n m = if abs (n - m) <= 1
+                                           then True 
+                                           else False
+                           left = count a
+                           right = count a'
+balance :: Ord a => [a] -> Tree a
+balance (a:[]) = Leaf a
+balance ax = Node (balance left) (balance rigth)
+    where 
+      size = (length ax) `div` 2
+      left = take size ax
+      rigth = drop size ax
