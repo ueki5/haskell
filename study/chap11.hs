@@ -40,11 +40,13 @@ solution e xs x = elem (values e) (choices xs) && (eval e == [x])
 split :: [a] -> [([a],[a])]
 split [] = []
 split [_] = []
--- split (x:xs) = ([x],xs):[(x:ls,rs)|(ls,rs) <- split xs]
-split xs = [(take n xs, drop n xs)|n <- [1 .. splitTo]]
-    where splitTo = (length xs) - 1
--- exprs :: [Int] -> [Expr]
--- exprs [] -> []
+split (x:xs) = ([x],xs):[(x:ls,rs)|(ls,rs) <- split xs]
+-- split xs = [(take n xs, drop n xs)|n <- [1 .. splitTo]]
+--     where splitTo = (length xs) - 1
+exprs :: [Int] -> [Expr]
+exprs [] -> []
+exprs [n] -> Val n
+exprs 
 -- combine :: Expr -> Expr -> [Expr]
 -- ops :: [Op]
 -- solutions :: [Int] -> Int -> [Expr]
