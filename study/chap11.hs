@@ -1,15 +1,20 @@
-data Op = Add | Sub | Mul | Div
+data Op = Add | Sub | Mul | Div deriving Show
 valid :: Op -> Int -> Int -> Bool
-valid Add _ _ = True
+-- valid Add _ _ = True
+valid Add x y = x >= y
 valid Sub x y = x > y
-valid Mul _ _ = True
-valid Div x y = x `mod` y == 0
+-- valid Mul _ _ = True
+valid Mul x y = x /= 1 && y /= 1 && x >= y
+valid Div x y = y /= 1 && x `mod` y == 0
 apply :: Op -> Int -> Int -> Int
 apply Add x y = x + y
 apply Sub x y = x - y
 apply Mul x y = x * y
 apply Div x y = x `div` y
-data Expr = Val Int | App Op Expr Expr
+data Expr = Val Int | App Op Expr Expr deriving Show
+-- show :: Expr -> String
+-- show (Val n) = "Val " ++ show n
+-- show (App o l r) = "App " ++ "(" ++ show l ++ show r ++ ")"
 values :: Expr -> [Int]
 values (Val n) = [n]
 values (App _ l r) = values l ++ values r
@@ -34,22 +39,47 @@ perms [] = [[]]
 perms (x:xs) = concat (map (interleave x) (perms xs))
 choices :: [a] -> [[a]]
 choices [] = [[]]
-choices xs = concat (map perms (subs xs))
+-- choices xs = concat (map perms (subs xs))
+choices xs = [xs''| xs' <- subs xs,
+                         xs'' <- perms xs']
+-- isChoice :: [a] -> [a] -> Bool
+-- isChoice' (x:xs ys) = 
 solution :: Expr -> [Int] -> Int -> Bool
-solution e xs x = elem (values e) (choices xs) && (eval e == [x])
+solution e xs n = elem (values e) (choices xs) && (eval e == [n])
 split :: [a] -> [([a],[a])]
 split [] = []
 split [_] = []
 split (x:xs) = ([x],xs):[(x:ls,rs)|(ls,rs) <- split xs]
 -- split xs = [(take n xs, drop n xs)|n <- [1 .. splitTo]]
 --     where splitTo = (length xs) - 1
-exprs :: [Int] -> [Expr]
-exprs [] -> []
-exprs [n] -> Val n
-exprs 
--- combine :: Expr -> Expr -> [Expr]
--- ops :: [Op]
--- solutions :: [Int] -> Int -> [Expr]
+exprs [] = []
+exprs [n] = [Val n]
+exprs xs = [e | (ls, rs) <- split xs
+                       ,l <- exprs ls
+                       ,r <- exprs rs
+                       ,e <- combine l r]
+combine :: Expr -> Expr -> [Expr]
+combine l r = [App op l r| op <- ops]
+ops :: [Op]
+ops = [Add , Sub , Mul , Div]
+solutions :: [Int] -> Int -> [Expr]
+solutions xs n = [e | xs' <- choices xs,
+                      e <- exprs xs',
+                      eval e == [n]]
+type Result = (Expr, Int)
+results :: [Int] -> [Result]
+results [] = []
+results [n] = [(Val n,n)]
+results xs = [r | (ls, rs) <- split xs
+                       ,l <- results ls
+                       ,r <- results rs
+                       ,r <- combine' l r]
+combine' :: Result -> Result -> [Result]
+combine' (l, x) (r, y) = [(App op l r,apply op x y)| op <- ops, valid op x y]
+solutions' :: [Int] -> Int -> [Expr]
+solutions' xs n = [e |xs' <- choices xs,
+                      (e, n') <- results xs',
+                      n' == n]
 v1 = Val 1
 v2 = Val 2
 e1 = App Add v1 v2
