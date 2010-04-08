@@ -97,11 +97,11 @@ allCase xs = [es | xs' <- choices xs,
                    es    <- exprs xs']
 validCase :: [Int] -> [Expr]
 validCase xs = [es | es <- allCase xs, eval es /= []]
--- data CheckVal = Infinate | Int
--- solutions''' :: [Int] -> Int -> ChackVal -> ([Expr], [Expr])
--- solutions''' xs n = [e |xs' <- choices xs,
---                       (e, n') <- results xs',
---                       n' == n]
+type CheckVal = Maybe Int
+solutions''' :: [Int] -> Int -> CheckVal -> ([Expr], [Expr])
+solutions''' xs n = [e |xs' <- choices xs,
+                      (e, n') <- results xs',
+                      n' == n]
 v1 = Val 1
 v2 = Val 2
 e1 = App Add v1 v2
