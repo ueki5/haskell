@@ -97,11 +97,12 @@ allCase xs = [es | xs' <- choices xs,
                    es    <- exprs xs']
 validCase :: [Int] -> [Expr]
 validCase xs = [es | es <- allCase xs, eval es /= []]
-sortr :: (Result -> Result -> Bool) -> [Result] -> [Result]
-sortr f [] = []
-sortr f (x:xs) = sortr f ls ++ [x] ++ sortr f rs
+sortByResult :: (Result -> Result -> Bool) -> [Result] -> [Result]
+sortByResult f [] = []
+sortByResult f (x:xs) = sortByResult f ls ++ [x] ++ sortByResult f rs
     where ls = [l | l <- xs,f x l == True]
           rs = [r | r <- xs,f x r == False]
+sortByValue :: 
 v1 = Val 1
 v2 = Val 2
 e1 = App Add v1 v2
