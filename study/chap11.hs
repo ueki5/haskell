@@ -102,7 +102,10 @@ sortByResult f [] = []
 sortByResult f (x:xs) = sortByResult f ls ++ [x] ++ sortByResult f rs
     where ls = [l | l <- xs,f x l == True]
           rs = [r | r <- xs,f x r == False]
-sortByValue :: 
+compResult :: Int -> Result -> Result -> Bool
+compResult n (re, rv) (le, lv) = abs (rv - n) > abs (lv - n)
+sortByValue :: Int -> [Result] -> [Result]
+sortByValue n rs = sortByResult (compResult n) rs
 v1 = Val 1
 v2 = Val 2
 e1 = App Add v1 v2
