@@ -67,5 +67,12 @@ compByValue n le re = abs (lv - n) > abs (rv - n)
     where
       [lv] = eval le
       [rv] = eval re
-sortByValue :: Int -> [Int] -> [Expr]
-sortByValue n ns = sortByFunc (compByValue n) (validCase ns)
+sortByValue :: Int -> [Expr] -> [Expr]
+sortByValue n es = sortByFunc (compByValue n) es
+main = do print ("e1=" ++ show e1)
+          print ("v1=" ++ show (eval e1))
+          print ("e2=" ++ show e2)
+          print ("v2=" ++ show (eval e2))
+    where ptn1 = validCase [1,3,7,10,25,50]
+          e1 = head (sortByValue 765 ptn1)
+          e2 = head (sortByValue 831 ptn1)
