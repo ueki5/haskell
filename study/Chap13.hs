@@ -1,4 +1,4 @@
-fmodule Chap13 where
+module Chap13 where
 import Prelude hiding (reverse)
 
 data Nat =Zero |Succ Nat
@@ -40,10 +40,10 @@ add (Succ n) m = Succ (add n m)
 -- add (Succ (add x y)) z
 -- Succ (add (add x y) z)
 
--- -- reverse
--- reverse :: [a] -> [a]
--- reverse [] = []
--- reverse (x:xs) = reverse xs ++ [x]
+-- reverse
+reverse :: [a] -> [a]
+reverse [] = []
+reverse (x:xs) = reverse xs ++ [x]
 -- -- reverse に対し、以下の性質が成り立つ事を証明せよ
 -- reverse (reverse xs) = xs
 -- -- xs = []の時、成り立つ
