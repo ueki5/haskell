@@ -1,4 +1,4 @@
-module Chap13 where
+fmodule Chap13 where
 import Prelude hiding (reverse)
 
 data Nat =Zero |Succ Nat
@@ -6,36 +6,36 @@ add :: Nat -> Nat -> Nat
 add Zero m = m
 add (Succ n) m = Succ (add n m)
 
--- -- ˆÈ‰º‚Ì«¿‚ª¬‚è—§‚Â–‚ğØ–¾‚µ‚½‚¢I
+-- -- ä»¥ä¸‹ã®æ€§è³ªãŒæˆã‚Šç«‹ã¤äº‹ã‚’è¨¼æ˜ã—ãŸã„ï¼
 -- add n Zero = n
--- -- n = Zero‚Ì
+-- -- n = Zeroã®æ™‚
 -- add Zero Zero = Zero
--- -- ˆÈ‰º‚ğ‰¼’è‚µ‚½ê‡A
+-- -- ä»¥ä¸‹ã‚’ä»®å®šã—ãŸå ´åˆã€
 -- add n Zero = n
--- -- ˆÈ‰º‚ªí‚É¬‚è—§‚Â‚©Hi¬‚è—§‚Âj
+-- -- ä»¥ä¸‹ãŒå¸¸ã«æˆã‚Šç«‹ã¤ã‹ï¼Ÿï¼ˆæˆã‚Šç«‹ã¤ï¼‰
 -- add (Succ n) Zero = Succ (add n Zero)
 --                     Succ n
 
--- -- ©‘R”‚Ì‰ÁZ‚ÉŠÖ‚·‚éŒ‹‡–@‘¥‚ª¬‚è—§‚Â–‚ğØ–¾‚µ‚½‚¢I
+-- -- è‡ªç„¶æ•°ã®åŠ ç®—ã«é–¢ã™ã‚‹çµåˆæ³•å‰‡ãŒæˆã‚Šç«‹ã¤äº‹ã‚’è¨¼æ˜ã—ãŸã„ï¼
 -- add x (add y z) = add (add x y) z
--- -- y = Zero‚ÌA¬‚è—§‚Â
+-- -- y = Zeroã®æ™‚ã€æˆã‚Šç«‹ã¤
 -- add x (add Zero z) = add (add x Zero) z
 -- add x z = add x z
--- -- y ‚ÌA¬‚è—§‚Â‚Æ‰¼’è‚µ‚½ê‡ASucc y ‚Å¬‚è—§‚Â‚©H
+-- -- y ã®æ™‚ã€æˆã‚Šç«‹ã¤ã¨ä»®å®šã—ãŸå ´åˆã€Succ y ã§æˆã‚Šç«‹ã¤ã‹ï¼Ÿ
 -- add x (add y z) = add (add x y) z
 -- add x (add (Succ y) z) = add (add x (Succ y)) z
--- -- Ë‚¾‚ß
+-- -- â‡’ã ã‚
 
--- -- x = Zero‚ÌA¬‚è—§‚Â
+-- -- x = Zeroã®æ™‚ã€æˆã‚Šç«‹ã¤
 -- add Zero (add y z) = add (add Zero y) z
 -- add y z = add y z
--- -- x ‚ÌA¬‚è—§‚Â‚Æ‰¼’è‚µ‚½ê‡ASucc x ‚Å¬‚è—§‚Â‚©HË¬‚è—§‚Á‚½
+-- -- x ã®æ™‚ã€æˆã‚Šç«‹ã¤ã¨ä»®å®šã—ãŸå ´åˆã€Succ x ã§æˆã‚Šç«‹ã¤ã‹ï¼Ÿâ‡’æˆã‚Šç«‹ã£ãŸ
 -- add x (add y z) = add (add x y) z
 -- add (Succ x) (add y z) = add (add (Succ x) y) z
--- -- ¶
+-- -- å·¦
 -- Succ (add x (add y z))
 -- Succ (add (add x y) z)
--- -- ‰E
+-- -- å³
 -- add (add (Succ x) y) z
 -- add (Succ (add x y)) z
 -- Succ (add (add x y) z)
@@ -44,14 +44,14 @@ add (Succ n) m = Succ (add n m)
 -- reverse :: [a] -> [a]
 -- reverse [] = []
 -- reverse (x:xs) = reverse xs ++ [x]
--- -- reverse ‚É‘Î‚µAˆÈ‰º‚Ì«¿‚ª¬‚è—§‚Â–‚ğØ–¾‚¹‚æ
+-- -- reverse ã«å¯¾ã—ã€ä»¥ä¸‹ã®æ€§è³ªãŒæˆã‚Šç«‹ã¤äº‹ã‚’è¨¼æ˜ã›ã‚ˆ
 -- reverse (reverse xs) = xs
--- -- xs = []‚ÌA¬‚è—§‚Â
+-- -- xs = []ã®æ™‚ã€æˆã‚Šç«‹ã¤
 -- reverse (reverse []) =reverse [] = []
--- -- xs ‚Ì‚Æ‚«¬‚è—§‚Â‚Æ‰¼’è‚µAx:xs‚Ì¬‚è—§‚Â‚©H
+-- -- xs ã®ã¨ãæˆã‚Šç«‹ã¤ã¨ä»®å®šã—ã€x:xsã®æ™‚æˆã‚Šç«‹ã¤ã‹ï¼Ÿ
 -- reverse (reverse xs) = xs
 -- reverse (reverse (x:xs)) = x:xs
--- -- ¶
+-- -- å·¦
 -- reverse (reverse xs ++ [x])
 -- reverse [x] ++ reverse (reverse xs)
 -- [x] ++ xs
