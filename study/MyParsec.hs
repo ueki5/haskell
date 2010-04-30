@@ -1,10 +1,11 @@
 -- 簡易パーサコンビネータ（ふつうのHaskellより）
 module MyParsec where
--- import Char
--- import List
+import Char
+import List
 
 -- パーサの型
 data MyParser tok a = MyParser ([tok] -> Maybe (a,[tok]))
+
 -- モナドインスタンスの定義
 instance Monad (MyParser tok) where
   return x = MyParser (\input -> Just (x, input))
@@ -36,23 +37,30 @@ firstChar f = satisfy (test f)
     test :: (Char -> Bool) -> [Char] -> Bool
     test f [] = False
     test f (c: _) = f c
+
 -- <|>関数の実装
 infixr 1 <|>
-
 (<|>) :: MyParser tok a -> MyParser tok a -> MyParser tok a
 p1 <|> p2 = MyParser nextState
   where
     nextState input = case run p1 input of
                         Just x -> Just x
                         Nothing -> run p2 input
+
 -- ０回以上パースする？
 many :: MyParser tok a -> MyParser tok [a]
 many p = do x <- p
             xs <- many p
             return (x:xs)
       <|> return []
+
 -- １回以上パースする？
 many1 :: MyParser tok a -> MyParser tok [a]
 many1 p = do x <- p
              xs <- many p
              return (x:xs)
+
+-- ここから少し遊び
+-- uekigo1 xs = parse (firstChar (\x -> x == 'c')) xs
+-- uekigo2 = parse (firstChar isDigit)
+-- uekigo3 xs = parse (firstChar isNumber) xs
