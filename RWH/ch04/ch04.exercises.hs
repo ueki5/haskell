@@ -1,6 +1,6 @@
 module Ch04 where
 import Data.Char(digitToInt,isDigit)
-import Data.List(groupBy)
+import Data.List(groupBy,tails)
 -- asInt :: String -> Int
 -- asInt s = loop 0 s
 --     where loop n [] = n
@@ -39,5 +39,14 @@ takeWhile'' f xs = foldr takef [] xs
                    where takef x b = case (f x) of
                                      False -> []
                                      True -> x:b
---groupBy
--- groupBy' :: (a -> a -> Bool) -> [a] -> [[a]]
+-- groupBy
+groupBy' :: (a -> a -> Bool) -> [a] -> [[a]]
+groupBy' p xs = foldl (groupByf p) [] xs
+groupByf :: (a -> a -> Bool) -> [[a]] -> a -> [[a]]
+groupByf p [] y = [[y]]
+groupByf p (x:xs) y = if p (last x) y 
+                      then (y:x):xs
+                      else x:(groupByf p xs y)
+tails' :: [a] -> [[a]]
+tails' [] = []
+tails' xs@(x:xs') = xs:(tails' xs')
