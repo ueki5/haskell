@@ -50,3 +50,11 @@ groupByf p (x:xs) y = if p (last x) y
 tails' :: [a] -> [[a]]
 tails' [] = []
 tails' xs@(x:xs') = xs:(tails' xs')
+myfoldl' :: (a -> b -> a) -> a -> [b] -> a
+myfoldl' _ zero [] = zero
+myfoldl' step zero (x:xs) = let new = step zero x
+                          in seq new (myfoldl' step new xs)
+myfoldr' :: (a -> b -> b) -> b -> [a] -> b
+myfoldr' _ zero [] = zero
+myfoldr' step last (x:xs) = let new = step x last
+                          in seq new (myfoldr' step new xs)
