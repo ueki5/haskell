@@ -1,8 +1,8 @@
-module Prettify where
+module Ch05.Prettify where
 import Numeric(showHex)
 import Data.Bits(shiftR, (.&.))
 import Data.Char(ord)
-import SimpleJSON(JValue(..))
+import Ch05.SimpleJSON(JValue(..))
 data Doc = Empty
          | Char Char
          | Text String

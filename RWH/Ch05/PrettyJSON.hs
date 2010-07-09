@@ -1,9 +1,9 @@
-module PrettyJSON
+module Ch05.PrettyJSON
     (
      renderJValue
     ) where
-import SimpleJSON(JValue(..))
-import Prettify
+import Ch05.SimpleJSON(JValue(..))
+import Ch05.Prettify
     (
      Doc(..)
      ,(<>)

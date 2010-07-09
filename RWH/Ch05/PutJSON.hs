@@ -1,7 +1,7 @@
-module PutJSON where
+module Ch05.PutJSON where
 
 import Data.List (intercalate)
-import SimpleJSON
+import Ch05.SimpleJSON
 
 renderJValue :: JValue -> String
 renderJValue (JString s) = show s
