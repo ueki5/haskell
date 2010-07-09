@@ -7,7 +7,7 @@ class JSON a where
 instance JSON JValue where
     toJValue = id
     fromJValue = Right
--- instance JSON Bool where
---     toJValue = JBool
---     fromJValue (JBool b) = Right b
---     fromJValue _ = Left "not a JSON boolean"
+instance JSON Bool where
+    toJValue = JBool
+    fromJValue (JBool b) = Right b
+    fromJValue _ = Left "not a JSON boolean"

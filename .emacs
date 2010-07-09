@@ -1,4 +1,4 @@
-(setq haskell-program-name "/usr/bin/ghci -i~/dev/haskell/RWH")
+(setq haskell-program-name "/usr/bin/ghci -i/home/ueki/dev/haskell/RWH")
 (load "/usr/share/emacs/site-lisp/haskell-mode/haskell-site-file")
 (add-hook 'haskell-mode-hook 'turn-on-haskell-decl-scan)
 (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
