@@ -1,15 +1,17 @@
+{-# LANGUAGE TypeSynonymInstances #-}
 module Ch06.Eqclasses where
 import Ch06.Naiveeq
+type UekiString = [Char]
 class BasicEq a where
     isEqual :: a -> a -> Bool
 instance BasicEq Bool where
     isEqual True True = True
     isEqual False False = True
     isEqual _ _ = False
--- instance BasicEq [Char] where
---     isEqual [] [] = True
---     isEqual (x:xs) (y:ys) = x == y && isEqual xs ys
---     isEqual _ _ = False
+instance BasicEq String where
+    isEqual [] [] = True
+    isEqual (x:xs) (y:ys) = x == y && isEqual xs ys
+    isEqual _ _ = False
 class BasicEq2 a where
     isEqual2 :: a -> a -> Bool
     isNotEqual2 :: a -> a -> Bool

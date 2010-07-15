@@ -1,5 +1,8 @@
 import Ch05.SimpleJSON
 -- ‚i‚r‚n‚m
+newtype JAry a = JAry {
+      fromJAry :: [a]
+    } deriving (Eq, Ord, Show)
 type JSONError = String
 class JSON a where
     toJValue :: a -> JValue
