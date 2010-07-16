@@ -5,12 +5,12 @@ func :: String -> IO String
 func str = do 
   putStrLn str
   return str
-main = getLine 
-        >>= mrevert
---         >>= myToUpper4
---        >>= myToUpper
---        >>= return . (map toUpper)
-       >>= putStrLn
+main = do
+  arg <- getLine
+  putStrLn (revert arg)
+-- main = getLine 
+--        >>= mrevert
+--        >>= putStrLn
 myToUpper :: String -> IO String
 myToUpper str = return (map toUpper str)
 myToUpper2 str = (return . (map toUpper)) str
