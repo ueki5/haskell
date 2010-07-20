@@ -1,4 +1,4 @@
-module Ch08.SumFile where
+-- module Ch08.SumFile where
 main = do
   contents <- getContents
   print (sumFile contents)
