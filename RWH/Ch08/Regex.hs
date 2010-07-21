@@ -1,4 +1,4 @@
-import Text.Regex.Posix
+import Text.RegexPosix
 main = do
   contents <- getLine
   putStrLn contents
