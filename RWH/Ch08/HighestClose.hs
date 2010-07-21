@@ -8,7 +8,7 @@ readPrice str =
       Just (dollars,rest) -> 
           case L.readInt (L.tail rest) of
             Nothing           -> Nothing
-   Text.Regex.Posix          Just (cents,more) ->
+            Just (cents,more) ->
                 Just (dollars * 100 + cents)
 -- highestClose :: L.ByteString -> Maybe Int
 highestClose = maximum . (Nothing:) . map closing . L.lines
