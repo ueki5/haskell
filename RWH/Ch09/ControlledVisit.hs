@@ -21,11 +21,18 @@ data Info = Info {
       } deriving (Eq, Ord, Show)
 
 getInfo :: FilePath -> IO Info
-getInfo path =  do
-          perms <- getPermissions path
-          size <- getFileSize path
-          modified <- getModificationTime path
-          return (Info path (Just perms) size (Just modified))
+-- getInfo path =  do
+--           perms <- getPermissions path
+--           size <- getFileSize path
+--           modified <- getModificationTime path
+--           return (Info path (Just perms) size (Just modified))
+maybeIO :: IO a -> IO (Maybe a)
+maybeIO act = handle (\_ -> return Nothing) (Just `liftM` act)
+getInfo path = do
+    perms <- maybeIO (getPermissions path)
+    size <- maybeIO (bracket (openFile path ReadMode) hClose hFileSize)
+    modified <- maybeIO (getModificationTime path)
+    return (Info path perms size modified)
 
 traverse :: ([Info] -> [Info]) -> FilePath -> IO [Info]
 traverse order path = do
@@ -41,3 +48,10 @@ getUsefulContents path = do
     return (filter (`notElem` [".",".."]) names)
 isDirectory :: Info -> Bool
 isDirectory = maybe False searchable . infoPerms
+myFilter :: [Info] -> [Info]
+myFilter infos = filter myFilter' infos
+    where myFilter' :: Info -> Bool
+          myFilter' info = case infoSize info of
+                             Nothing -> False
+                             Just size | size > 100 -> True
+                                       | otherwise -> False
