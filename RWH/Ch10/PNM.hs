@@ -37,3 +37,15 @@ parseP5 s =
                                       Nothing -> Nothing
                                       Just (bitmap, s6) -> 
                                           Just (Greymap width height maxGrey, bitmap ,s6)
+
+(>>?) :: Maybe a -> (a -> Maybe b) -> Maybe b
+Nothing >>? _ = Nothing
+Just a >>? f = f a
+parseP5_take2 s = 
+    matchHeader (L8.pack "P5") s >>?
+    \s1 -> getNat s1 >>?
+    \(width, s2) -> getNat s2 >>?
+    \(height, s3) -> getNat s3 >>?
+    \(maxGrey, s4) -> if maxGrey > 255 then Nothing else getBytes 1 s4 >>?
+    \(_, s5) -> getBytes (width * height) s5 >>?
+    \(bitmap, s6) -> Just (Greymap width height maxGrey, bitmap ,s6)
