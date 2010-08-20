@@ -20,7 +20,7 @@ newtype Parse a = Parse {
 identity :: a -> Parse a
 identity a = Parse (\s -> Right (a, s))
 
--- parse :: Parse a -> .ByteString -> Either String a
+-- parse :: Parse a -> L.ByteString -> Either String a
 -- parse parser initState 
 --     = case runParse parser (ParseState initState 0) of
 --         Left err -> Left err
@@ -52,9 +52,8 @@ putState s = Parse (\_ -> Right ((), s))
 bail :: String -> Parse a
 bail err = Parse $ \s -> Left $ "byte offset" ++ show (offset s) ++ ": " ++ err
 (==>) :: Parse a -> (a -> Parse b) -> Parse b
-firstParser ==> secondParser = Parse chainedParser
+(==>) firstParser secondParser = Parse chainedParser
     where chainedParser initState = 
              case runParse firstParser initState of
                 Left errMessage -> Left errMessage
                 Right (firstResult, newState) -> runParse (secondParser firstResult) newState
-
