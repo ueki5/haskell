@@ -57,3 +57,10 @@ bail err = Parse $ \s -> Left $ "byte offset" ++ show (offset s) ++ ": " ++ err
              case runParse firstParser initState of
                 Left errMessage -> Left errMessage
                 Right (firstResult, newState) -> runParse (secondParser firstResult) newState
+uekiTest cs = runParse (parseByte ==> 
+                        \_ -> parseByte ==>
+                        \_ -> parseByte ==>
+                        \_ -> parseByte ==>
+                        \_ -> parseByte
+                       )
+                       (ParseState (L8.pack cs) 0)
