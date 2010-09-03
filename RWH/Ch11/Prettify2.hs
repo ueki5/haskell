@@ -6,7 +6,9 @@ data Doc = Empty
          | Concat Doc Doc
          | Union Doc Doc
          deriving (Show, Eq)
--- empty :: Doc
--- empty = undefined
--- (<>) :: Doc -> Doc -> Doc
--- (<>) = undefined
+empty :: Doc
+empty = Empty
+(<>) :: Doc -> Doc -> Doc
+a <> Empty = a
+Empty <> b = b
+a <> b = Concat a b
