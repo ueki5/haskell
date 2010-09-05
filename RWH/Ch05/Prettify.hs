@@ -69,3 +69,6 @@ punctuate p (d:ds) = (d <> p) : punctuate p ds
 hcat :: [Doc] -> Doc
 hcat [] = Empty
 hcat (d:ds) = d <> hcat ds
+------------------------------------------------------------
+fold :: (Doc -> Doc -> Doc) -> [Doc] -> Doc
+fold f = foldr f empty
