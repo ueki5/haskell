@@ -1,0 +1,11 @@
+name: Test
+version: 0.0
+build-depends: base,mtl,directory,HUnit
+exposed-modules: TypeCheck
+executable: TypeCheckTest
+-- buildable: False
+main-is: TypeCheckTest.hs
+
+executable: UNitSample2.hs
+-- buildable: False
+main-is: UNitSample2.hs
