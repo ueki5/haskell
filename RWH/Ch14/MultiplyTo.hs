@@ -17,10 +17,17 @@ multiplyTo n = do
 --   guarded (x * y == n) $ return (x, y)
   if x * y == n 
        then return (x, y) 
-       else fail ""
-
+       else []
 myfilter :: (a -> Bool) -> [a] -> [a]
 myfilter _ [] = []
 myfilter f (x:xs) 
          | f x = x : myfilter f xs
          | otherwise = myfilter f xs
+
+myTest xs ys = xs >>~ \x ->
+               ys >>~ \y ->
+               if odd (x * y)
+                   then return (x,y)
+                   else fail ""
+(>>~) :: [a] -> (a -> [b]) -> [[b]]
+xs >>~ f = map f xs
