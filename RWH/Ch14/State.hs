@@ -8,7 +8,11 @@ returnState a = State $ \s -> (a, s)
 -- bindState step makeStep =  \oldState -> 
 --     let (result, newState) = runState step $ oldState
 --     in State (runState (makeStep result) $ newState)
-bindState :: State s a -> (a -> State s b) -> s -> State s b
-bindState step makeStep oldState = 
+bindState :: State s a -> (a -> State s b) -> State s b
+bindState step makeStep = State $ \oldState ->
     let (result, newState) = runState step $ oldState
-    in makeStep result
+    in runState (makeStep result) newState
+get :: State s s
+get = State $ \s -> (s, s)
+put :: s -> State s ()
+put s = State $ \_ -> ((), s)
