@@ -44,19 +44,17 @@ liftReview alist = do
     (lookup' "user" alist)
     (lookup' "review" alist)
 
-(-->) :: [(String, Maybe String)] -> String -> Maybe String
-(-->) a s = case lookup s a of
-  Just (Just value@(_:_)) -> (Just value)
-  _ -> Nothing
+-- lookup' :: [(String, Maybe String)] -> String -> Maybe String
+-- lookup' a s = case lookup s a of
+--   Just (Just value@(_:_)) -> (Just value)
+--   _ -> Nothing
 
 simpleReview' :: [(String, Maybe String)] -> Maybe MovieReview
-simpleReview' alist = 
-  case lookup "title" alist of
-    Just (Just title@(x:xs)) -> 
-      case lookup "user" alist of
-        Just (Just user@(_:_)) ->
-          case lookup "review" alist of
-            Just (Just review@(_:_)) -> Just (MovieReview title user review) 
-            _  -> Nothing --no review
-        _  -> Nothing --no user
-    _  -> Nothing --no title
+simpleReview' alist = let (Just title) = lookup' "title" alist
+                          (Just user) = lookup' "user" alist
+                          (Just review) = lookup' "review" alist
+                      in return (MovieReview title user review)
+simpleReview'' alist = let title = lookup' "title" alist
+                           user = lookup' "user" alist
+                           review = lookup' "review" alist
+                      in liftM3 MovieReview title user review
