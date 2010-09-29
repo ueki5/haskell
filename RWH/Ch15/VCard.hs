@@ -45,7 +45,8 @@ isContext c (c', phones) = c == c'
 oneBusinessPhones ps = lookup Business ps `mplus` lookup Mobile ps
 allParsonalPhones ps = map snd $ filter (isContext Home) ps `mplus` 
                                  filter (isContext Mobile) ps
-lookupM :: (MonadPlus m,Eq a) => a -> [(a, b)] -> m b
+lookupM :: (MonadPlus m, Eq a) => a -> [(a, b)] -> m b
 lookupM _ [] = mzero
-lookupM key (p, ps) = if p == key
-                      then 
+lookupM key (p:ps) = if (fst p) == key 
+                     then (return (snd p)) `mplus` (lookupM key ps)
+                     else lookupM key ps
