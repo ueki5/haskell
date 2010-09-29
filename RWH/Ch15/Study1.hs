@@ -1,0 +1,11 @@
+{-# LANGUAGE EmptyDataDecls,TypeFamilies,MultiParamTypeClasses #-}
+-- data family GMap k :: * -> *
+-- data family Array e
+-- data family Array :: * -> *
+-- data family Array :: * -> *
+-- class GMapKey k where
+--   data GMap k :: * -> *
+-- class Collection c a where
+--     union :: c a -> c a -> c a
+-- data S      -- S :: *
+-- data T a    -- T :: * -> *
