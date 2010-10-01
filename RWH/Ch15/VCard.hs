@@ -47,6 +47,22 @@ allParsonalPhones ps = map snd $ filter (isContext Home) ps `mplus`
                                  filter (isContext Mobile) ps
 lookupM :: (MonadPlus m, Eq a) => a -> [(a, b)] -> m b
 lookupM _ [] = mzero
-lookupM key (p:ps) = if (fst p) == key 
-                     then (return (snd p)) `mplus` (lookupM key ps)
-                     else lookupM key ps
+-- lookupM key (p:ps) = if (fst p) == key 
+--                      then (return (snd p)) `mplus` (lookupM key ps)
+--                      else lookupM key ps
+lookupM key ((x, y):ps)
+    | x == key = return y `mplus` lookupM key ps
+    | otherwise = lookupM key ps
+mor :: [Phone] -> [Phone] -> [Phone]
+-- NG!! first expression always match!
+-- mor mzero ys = ys
+-- mor xs ys = xs
+mor xs ys = if xs == mzero then ys else xs
+oneParsonalPhone' :: [(Context, Phone)] -> Maybe Phone
+oneParsonalPhone' ps = lookupM Home ps `mplus` lookupM Mobile ps
+allBusinessPhones' :: [(Context, Phone)] -> [Phone]
+-- allBusinessPhones' ps = let phones = lookupM Business ps
+--                            in if phones == [] 
+--                               then lookupM Mobile ps
+--                               else phones
+allBusinessPhones' ps = (lookupM Business ps) `mor` (lookupM Mobile ps)
