@@ -14,7 +14,6 @@ instance MonadHandle System.IO.Handle IO where
     hClose = System.IO.hClose
     hGetContents = System.IO.hGetContents
     hPutStrLn = System.IO.hPutStrLn
-
 class (MonadHandle h m, MonadIO m) => MonadHandleIO h m | m -> h
 
 instance MonadHandleIO System.IO.Handle IO
