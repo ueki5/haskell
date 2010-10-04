@@ -23,3 +23,4 @@ instance MonadHandle FilePath WriterIO where
     hPutStr h str = tell [Put h str]
     hClose h = tell [Close h]
     hGetContents h = tell [GetContents h] >> return ""
+
