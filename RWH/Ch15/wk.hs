@@ -1,5 +1,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 import Control.Monad
+
 data Ueki a = UekiData a
             | UekiNothing
               deriving (Show)
