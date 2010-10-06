@@ -24,3 +24,12 @@ p_hex = do
     let ((d, _):_) = readHex [a, b]
     return . toEnum $ d
 urlBaseChars = ['a'..'z']++['A'..'Z']++['0'..'9']++"$-_.!*'(),"
+
+parseQuery :: String -> Either ParseError [(String, Maybe String)]
+parseQuery line = parse p_query "(unknown)" line
+parsePair :: String -> Either ParseError (String, Maybe String)
+parsePair line = parse p_pair "(unknown)" line
+parseChar :: String -> Either ParseError Char
+parseChar line = parse p_char "(unknown)" line
+parseHex :: String -> Either ParseError Char
+parseHex line = parse p_hex "(unknown)" line
