@@ -11,3 +11,6 @@ instance Foo Char where
     foo c = [c]
 instance Foo String where
     foo = id
+
+instance Foo Int where
+    foo a = show a
