@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP,ForeignFunctionInterface #-}
-
+-- when pcre.h is not found
+-- hsc2hs Regex.hsc -I /local/include
 module Ch17.Regex where
 
 import Foreign
