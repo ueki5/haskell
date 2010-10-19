@@ -11,7 +11,7 @@ import Foreign.C.Types
 
 {-# LINE 9 "Regex.hsc" #-}
 
-newType PCREOption = PCREOption { unPCREOption :: CInt}
+newtype PCREOption = PCREOption { unPCREOption :: CInt}
     deriving (Eq, Show)
 
 caseless :: PCREOption

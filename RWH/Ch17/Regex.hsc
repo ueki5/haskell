@@ -7,7 +7,7 @@ import Foreign.C.Types
 
 #include <pcre.h>
 
-newType PCREOption = PCREOption { unPCREOption :: CInt}
+newtype PCREOption = PCREOption { unPCREOption :: CInt}
     deriving (Eq, Show)
 
 caseless :: PCREOption
