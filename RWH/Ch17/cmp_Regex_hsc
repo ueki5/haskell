@@ -1,0 +1,3 @@
+hsc2hs Regex.hsc -I/usr/local/include
+ghci -i/d/data/dev/haskell/RWH -L/usr/local/bin -lpcre-0
+#:load Regex.hs
