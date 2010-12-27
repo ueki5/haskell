@@ -6,7 +6,7 @@ import System.Directory (doesDirectoryExist)
 import System.FilePath ((</>))
 import Control.Monad (forM_, when)
 import Control.Monad.Trans (liftIO)
-import Control.Monad.Writer (WriterT, tell)
+import Control.Monad.Writer (WriterT, tell, runWriterT, execWriterT)
 
 countEntries :: FilePath -> WriterT [(FilePath, Int)] IO ()
 countEntries path = do
