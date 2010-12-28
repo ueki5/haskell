@@ -173,7 +173,3 @@ match (Regex pcre_fp _) subject os = unsafePerformIO $ do
         where
             start = unsafeDrop (fromIntegral a) s
             end   = unsafeTake (fromIntegral (b-a)) start
--- fromForeignPtr = undefined
--- toForeignPtr = undefined
--- unsafeDrop = undefined
--- unsafeTake = undefined
