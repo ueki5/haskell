@@ -1,4 +1,9 @@
-module Ch18.UWriter3 where
+module Ch18.UWriter3 
+       (
+         Log,
+         addn,
+         execLog
+       ) where
 import Control.Monad
 
 data Log a = Log {execLog::(a, String)} deriving (Show)
@@ -8,20 +13,12 @@ instance Monad Log where
                 n = k a
                 (b, s') = execLog n
             in Log (b, s ++ "," ++ s')
-record :: String -> Log ()
-record s = Log ((), s)
 calc :: Int -> Log Int
 calc n = Log ( 2 * n, show n)
+addn :: Int -> Int -> Log Int
+addn n m = Log (n + m, show m )
 go :: Int -> Log Int
 go n = return n 
-       >>= calc
-       >>= calc
-       >>= calc
-go2 n = do
-  a <- return n 
-  b <- calc a
-  c <- calc b
-  d <- calc c
-  return d
-go3 :: String -> Log ()
-go3 s = record s
+       >>= addn 1
+       >>= addn 2
+       >>= addn 3
