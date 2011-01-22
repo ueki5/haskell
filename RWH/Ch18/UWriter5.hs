@@ -1,30 +1,29 @@
 module Ch18.Uwriter5 where
 import Control.Monad
-data Uist a = UistD a (Uist a) | Null deriving (Show)
+data Uist a = Null 
+            | UistD a (Uist a) deriving (Show)
 instance Monad Uist where
   return a = UistD a Null
   (>>=) Null k = Null
-  (>>=) (UistD a cs) k = (k a) `concate` (>>=) cs k
-    where 
-      concate :: Uist a -> Uist a -> Uist a
-      Null `concate` as = as
-      (UistD a as) `concate` as' = UistD a (as `concate` as')
+  (>>=) (UistD a cs) k = (k a) ++ (>>=) cs k
+   where 
+     (++) :: Uist a -> Uist a -> Uist a
+     Null ++ as = as
+     (UistD a as) ++ as' = UistD a (as ++ as')
 
-ueki :: String -> Uist String
-ueki [] = Null
-ueki (c:cs) = UistD [c] $ UistD [c] $ ueki cs
+ueki :: String -> String -> Uist String
+ueki s [] = Null
+ueki s (c:cs) = UistD s $ UistD [c] $ ueki s cs
 
 uekiG :: String -> Uist String
-uekiG s = ueki s 
-          >>= ueki
--- data Ueki a = UekiD {execUeki::(a, String)} deriving (Show)
--- instance Monad Ueki where
---   return a = UekiD (a, [])
---   m >>= k = let (a, s) = execUeki m
---                 n = k a
---                 (b, s') = execUeki n
---             in UekiD (b, s' ++ s)
--- a :: [Int]
--- a = [0,1,2,3]
--- uekiI2S :: Int -> Ueki Int
--- uekiI2S cs = UekiD (cs, show cs)
+uekiG s = ueki "a" s 
+          >>= ueki "b"
+uekiG' :: String -> Uist (String, String)
+uekiG' s = do 
+  x <- ueki "a" s 
+  y <- ueki "b" x
+  return (x,y)
+uekiG'' :: String -> Uist (String,String)
+uekiG'' s = ueki "a" s 
+          >>= \x -> ueki "b" x
+          >>= \y -> return (x, y)
