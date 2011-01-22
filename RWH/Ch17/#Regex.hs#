@@ -43,3 +43,4 @@ foreign import ccall unsafe "pcre.h pcre_compile"
                           -> Ptr CInt
                           -> Ptr Word8
                           -> IO (Ptr PCRE)
+

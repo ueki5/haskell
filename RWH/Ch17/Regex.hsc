@@ -36,3 +36,12 @@ foreign import ccall unsafe "pcre.h pcre_compile"
                           -> Ptr CInt
                           -> Ptr Word8
                           -> IO (Ptr PCRE)
+-- newForeignPtr :: FinalizerPtr a -> Ptr a -> IO (ForeignPtr a)
+
+-- data Regex = Regex !(ForeignPtr PCRE)
+--                    !ByteString
+--         deriving (Eq, Ord, Show)
+
+data Regex = Regex !(ForeignPtr PCRE)
+                   !ByteString
+        deriving (Eq, Ord, Show)
