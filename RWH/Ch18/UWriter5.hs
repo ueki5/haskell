@@ -34,7 +34,7 @@ forU (UistD c cs) k = k c >>=
                       \bs -> return (UistD b bs)
 mapU :: (Monad m) => (a -> m b) -> Uist a  -> m (Uist b)
 mapU k m = forU m k
-as = UistD 4 $ UistD 3 $ UistD 2 $ UistD 1 Null
+aint = UistD 4 $ UistD 3 $ UistD 2 $ UistD 1 Null :: Uist Int
 data Mona1 a = MonaD1 {k2d::a} deriving (Show)
 instance Monad Mona1 where
   return a = MonaD1 a
@@ -42,10 +42,21 @@ instance Monad Mona1 where
 k2 :: Int -> Mona1 Int
 k2 n = MonaD1 $ n * 2
 test2 :: Uist Int -> Mona1 (Uist Int)
-test2 ns = forU as k2
+test2 ns = forU aint k2
 uoldr :: (a -> b -> b) -> b -> Uist a -> b
 uoldr k b Null = b 
 uoldr k b (UistD a as) = k a (uoldr k b as)
 uoldl :: (a -> b -> a) -> a -> Uist b -> a
 uoldl k a Null = a
 uoldl k a (UistD b bs) = uoldl k (k a b) bs
+k3 :: Int -> Int -> Int
+k3 a b = a `div` b
+test3 :: Int
+test3 = uoldr k3 1 aint
+test4 :: Int
+test4 = uoldl k3 1 aint
+liftU ::(Monad m) => m a -> (a -> b) -> m b
+liftU m k = m >>= 
+            \a -> return $ k a
+test5 :: Uist Int -> Uist Int
+test5 as = liftU as (*2)
