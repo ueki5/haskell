@@ -1,29 +1,51 @@
 module Ch18.Uwriter5 where
 import Control.Monad
 data Uist a = Null 
-            | UistD a (Uist a) deriving (Show)
+            | UistD a (Uist a) 
+            deriving (Show)
+append :: Uist a -> Uist a -> Uist a
+Null `append` as = as
+(UistD a as) `append` as' = UistD a (as `append` as')
 instance Monad Uist where
   return a = UistD a Null
   (>>=) Null k = Null
-  (>>=) (UistD a cs) k = (k a) ++ (>>=) cs k
-   where 
-     (++) :: Uist a -> Uist a -> Uist a
-     Null ++ as = as
-     (UistD a as) ++ as' = UistD a (as ++ as')
+  (>>=) (UistD a cs) k = (k a) `append` (>>=) cs k
 
-ueki :: String -> String -> Uist String
-ueki s [] = Null
-ueki s (c:cs) = UistD s $ UistD [c] $ ueki s cs
+k1 :: String -> String -> Uist String
+k1 s [] = Null
+k1 s (c:cs) = UistD s $ UistD [c] $ k1 s cs
 
-uekiG :: String -> Uist String
-uekiG s = ueki "a" s 
-          >>= ueki "b"
-uekiG' :: String -> Uist (String, String)
-uekiG' s = do 
-  x <- ueki "a" s 
-  y <- ueki "b" x
+test1 :: String -> Uist String
+test1 s = k1 "a" s 
+          >>= k1 "b"
+test1' :: String -> Uist (String, String)
+test1' s = do 
+  x <- k1 "a" s 
+  y <- k1 "b" x
   return (x,y)
-uekiG'' :: String -> Uist (String,String)
-uekiG'' s = ueki "a" s 
-          >>= \x -> ueki "b" x
+test1'' :: String -> Uist (String,String)
+test1'' s = k1 "a" s 
+          >>= \x -> k1 "b" x
           >>= \y -> return (x, y)
+forU :: (Monad m) => Uist a -> (a -> m b) -> m (Uist b)
+forU Null k = return Null
+forU (UistD c cs) k = k c >>= 
+                      \b -> forU cs k >>= 
+                      \bs -> return (UistD b bs)
+mapU :: (Monad m) => (a -> m b) -> Uist a  -> m (Uist b)
+mapU k m = forU m k
+as = UistD 4 $ UistD 3 $ UistD 2 $ UistD 1 Null
+data Mona1 a = MonaD1 {k2d::a} deriving (Show)
+instance Monad Mona1 where
+  return a = MonaD1 a
+  m >>= k = k $ k2d m
+k2 :: Int -> Mona1 Int
+k2 n = MonaD1 $ n * 2
+test2 :: Uist Int -> Mona1 (Uist Int)
+test2 ns = forU as k2
+uoldr :: (a -> b -> b) -> b -> Uist a -> b
+uoldr k b Null = b 
+uoldr k b (UistD a as) = k a (uoldr k b as)
+uoldl :: (a -> b -> a) -> a -> Uist b -> a
+uoldl k a Null = a
+uoldl k a (UistD b bs) = uoldl k (k a b) bs
