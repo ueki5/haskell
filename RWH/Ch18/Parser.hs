@@ -3,10 +3,12 @@ import Control.Monad
 
 data Parser a = ParserD {execParser::String -> [(a, String)]}
 instance Monad Parser where
+  -- return :: a -> Parser a
   return v = ParserD $ \inp -> [(v, inp)]
-  p >>= f = ParserD $ \inp -> case execParser p inp of
+  -- (>>=) :: Parser a -> (a -> Parser b) -> Parser b
+  p >>= f = ParserD $ \inp -> case parser p inp of
                                 [] -> []
-                                ((v, out):ps) -> execParser (f v) out
+                                ((v, out):ps) -> parser (f v) out
 failure :: Parser a
 failure = ParserD $ \inp -> []
 item :: Parser Char
@@ -14,10 +16,20 @@ item = ParserD $ \inp -> case inp of
   [] -> []
   (c:cs) -> [(c, cs)]
 parser :: Parser a -> String -> [(a, String)]
-parser p inp = execParser p inp
--- uekigo :: a -> String -> [(a, String)]
+parser = execParser
 
+uekigo :: Parser (Char, Char, Char)
+uekigo = item >>= \x -> 
+         item >>= \y -> 
+         item >>= \z ->
+         return (x, y, z)
 
+uekigo2 :: String -> [((Char, Char, Char), String)]
+uekigo2 s = parser uekigo s
+
+uekigo3 :: Parser Char
+uekigo3 = item >>= \x ->
+          return x
 
 -- **************************************************************
 -- data Parser a = ParserD {execParser :: String -> [(a, String)]}
