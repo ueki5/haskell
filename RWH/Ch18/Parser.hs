@@ -2,31 +2,28 @@ module Ch18.Parser where
 import Control.Monad
 import Data.Char
 
-data Parser a = ParserD {execParser::String -> [(a, String)]}
+data Parser a = ParserD {execParser::String -> Maybe (a, String)}
 instance Monad Parser where
-  -- return :: a -> Parser a
-  return v = ParserD $ \inp -> [(v, inp)]
-  -- (>>=) :: Parser a -> (a -> Parser b) -> Parser b
+  return v = ParserD $ \inp -> Just (v, inp)
   p >>= f = ParserD $ \inp -> case parser p inp of
-                                [] -> []
-                                ((v, out):ps) -> parser (f v) out
+                                Nothing -> Nothing
+                                Just (v, out) -> parser (f v) out
+parser :: Parser a -> String -> Maybe (a, String)
+parser = execParser
 failure :: Parser a
-failure = ParserD $ \inp -> []
+failure = ParserD $ \inp -> Nothing
 item :: Parser Char
 item = ParserD $ \inp -> case inp of
-  [] -> []
-  (c:cs) -> [(c, cs)]
-check :: Parser Char
-check = ParserD $ \inp -> case inp of
-  [] -> []
-  s@(c:cs) -> [(c, s)]
-parser :: Parser a -> String -> [(a, String)]
-parser = execParser
+  [] -> Nothing
+  (c:cs) -> Just (c, cs)
 (+++) :: Parser a -> Parser a -> Parser a
 p +++ q = ParserD $ \inp -> case parser p inp of
-                      [] -> parser q inp
-                      [(v, out)] -> [(v, out)]
-
+                      Nothing -> parser q inp
+                      Just (v, out) -> Just (v, out)
+(&&&) :: Parser a -> Parser a -> Parser a
+p &&& q = ParserD $ \inp -> case parser p inp of
+                      Nothing -> Nothing
+                      Just (v, out) -> parser q inp
 sat :: (Char -> Bool) -> Parser Char
 sat p = do 
   x <- item
@@ -57,43 +54,25 @@ many1 p = do
   v <- p
   vs <- many p
   return (v:vs)
-integer :: Parser String
-integer = many1 digit
--- integer = do
---   x <- digit
---   xs <- integer
---   return (x:xs)
+intstr :: Parser String
+intstr = many1 digit
+integer :: Parser Int
+integer = liftM (\x -> read x) intstr
+variable :: Parser String
+variable = do
+    head <- letter
+    tail <- many alphanum
+    return (head:tail)
+constant :: Parser String
+constant = do
+    head <- letter &&& upper
+    tail <- many alphanum
+    return (head:tail)
 
--- integer :: Parser String
--- integer = check >>= \x ->
---   if isDigit x 
---     then 
---       item >>= \x' ->
---       integer >>= \cs ->
---       return (x:cs)
---     else 
---       return []
--- integer = item >>= \x->
---             if isDigit x 
---             then 
---               item >>= \x'->
---                 if isDigit x' 
---                 then 
---                   item >>= \x''->
---                     if isDigit x'' 
---                     then 
---                       return (x:x':[x''])
---                     else 
---                       return (x:[x'])
---                 else 
---                   return [x]
---             else 
---               return []
--- integer = check >>= \x->
---             if isDigit x 
---             then 
---               item >>= \x' -> 
---               integer >>= \s ->
---               return (x:s)
---             else 
---               return []
+operator :: Parser String
+operator = do
+    op <- char '+' +++ char '-' +++ char '*' +++ char '/' +++ char '='
+    return [op]
+formula :: Parser String
+formula = do
+    
