@@ -73,6 +73,4 @@ operator :: Parser String
 operator = do
     op <- char '+' +++ char '-' +++ char '*' +++ char '/' +++ char '='
     return [op]
-formula :: Parser String
-formula = do
     
