@@ -24,8 +24,8 @@ parser :: Parser a -> String -> [(a, String)]
 parser = execParser
 (+++) :: Parser a -> Parser a -> Parser a
 p +++ q = ParserD $ \inp -> case parser p inp of
-  [] -> parser q inp
-  [(v, out)] -> [(v, out)]
+                      [] -> parser q inp
+                      [(v, out)] -> [(v, out)]
 
 sat :: (Char -> Bool) -> Parser Char
 sat p = do 
