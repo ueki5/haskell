@@ -1,0 +1,76 @@
+{-# LANGUAGE CPP,ForeignFunctionInterface #-}
+-- when pcre.h is not found
+-- hsc2hs Regex.hsc -I /local/include
+module Ch17.Regex where
+
+import Foreign
+import Foreign.C.Types
+import Foreign.C.String
+-- import Data.ByteString.Char8 hiding (foldr, reverse)
+import Data.ByteString.Char8 (ByteString, useAsCString, pack, empty)
+import Data.ByteString.Unsafe (unsafeDrop, unsafeTake)
+import Data.ByteString.Internal (fromForeignPtr, toForeignPtr)
+
+#include <pcre.h>
+
+newtype PCREOption = PCREOption { unPCREOption :: CInt}
+    deriving (Eq, Show)
+
+-- caseless :: PCREOption
+-- caseless = PCREOption #const PCRE_CASELESS
+
+-- dollar_endonly :: PCREOption
+-- dollar_endonly = PCREOption #const PCRE_DOLLAR_ENDONLY
+
+-- dotall :: PCREOption
+-- dotall = PCREOption #const PCRE_DOTALL
+#{enum PCREOption, PCREOption
+  , caseless             = PCRE_CASELESS
+  , dollar_endonly       = PCRE_DOLLAR_ENDONLY
+  , dotall               = PCRE_DOTALL
+  }
+
+newtype PCREInfo = PCREInfo { unPCREInfo :: CInt}
+    deriving (Eq, Show)
+#{enum PCREInfo, PCREInfo
+  , info_options = PCRE_INFO_OPTIONS
+  , info_size = PCRE_INFO_SIZE
+  , info_capturecount = PCRE_INFO_CAPTURECOUNT
+  , info_backrefmax = PCRE_INFO_BACKREFMAX
+  , info_firstbyte = PCRE_INFO_FIRSTBYTE
+  , info_firstchar = PCRE_INFO_FIRSTCHAR
+  , info_firsttable = PCRE_INFO_FIRSTTABLE
+  , info_lastliteral = PCRE_INFO_LASTLITERAL
+  , info_nameentrysize = PCRE_INFO_NAMEENTRYSIZE
+  , info_namecount = PCRE_INFO_NAMECOUNT
+  , info_nametable = PCRE_INFO_NAMETABLE
+  , info_studysize = PCRE_INFO_STUDYSIZE
+  , info_default_tables = PCRE_INFO_DEFAULT_TABLES
+  , info_okpartial = PCRE_INFO_OKPARTIAL
+  , info_jchanged = PCRE_INFO_JCHANGED
+  , info_hascrorlf = PCRE_INFO_HASCRORLF
+  , info_minlength = PCRE_INFO_MINLENGTH
+  }
+
+combineOptions :: [PCREOption] -> PCREOption
+combineOptions = PCREOption . foldr ((.|.) . unPCREOption) 0
+combineExecOptions :: [PCREExecOption] -> PCREExecOption
+combineExecOptions = foldr (.|.) 0
+type PCRE = ()
+type PCREExtra = ()
+foreign import ccall unsafe "pcre.h pcre_compile"
+        c_pcre_compile :: CString
+                          -> PCREOption
+                          -> Ptr CString
+                          -> Ptr CInt
+                          -> Ptr Word8
+                          -> IO (Ptr PCRE)
+-- newForeignPtr :: FinalizerPtr a -> Ptr a -> IO (ForeignPtr a)
+
+-- data Regex = Regex !(ForeignPtr PCRE)
+--                    !ByteString
+--         deriving (Eq, Ord, Show)
+
+data Regex = Regex !(ForeignPtr PCRE)
+                   !ByteString
+        deriving (Eq, Ord, Show)
