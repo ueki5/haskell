@@ -9,9 +9,13 @@ module Ch17.Regex where
 import Foreign
 import Foreign.C.Types
 import Foreign.C.String
+-- import Data.ByteString.Char8 hiding (foldr, reverse)
+import Data.ByteString.Char8 (ByteString, useAsCString, pack, empty)
+import Data.ByteString.Unsafe (unsafeDrop, unsafeTake)
+import Data.ByteString.Internal (fromForeignPtr, toForeignPtr)
 
 
-{-# LINE 11 "Regex.hsc" #-}
+{-# LINE 15 "Regex.hsc" #-}
 
 newtype PCREOption = PCREOption { unPCREOption :: CInt}
     deriving (Eq, Show)
@@ -31,11 +35,53 @@ dollar_endonly        = PCREOption 32
 dotall                :: PCREOption
 dotall                = PCREOption 4
 
-{-# LINE 28 "Regex.hsc" #-}
+{-# LINE 32 "Regex.hsc" #-}
+
+newtype PCREInfo = PCREInfo { unPCREInfo :: CInt}
+    deriving (Eq, Show)
+info_options  :: PCREInfo
+info_options  = PCREInfo 0
+info_size  :: PCREInfo
+info_size  = PCREInfo 1
+info_capturecount  :: PCREInfo
+info_capturecount  = PCREInfo 2
+info_backrefmax  :: PCREInfo
+info_backrefmax  = PCREInfo 3
+info_firstbyte  :: PCREInfo
+info_firstbyte  = PCREInfo 4
+info_firstchar  :: PCREInfo
+info_firstchar  = PCREInfo 4
+info_firsttable  :: PCREInfo
+info_firsttable  = PCREInfo 5
+info_lastliteral  :: PCREInfo
+info_lastliteral  = PCREInfo 6
+info_nameentrysize  :: PCREInfo
+info_nameentrysize  = PCREInfo 7
+info_namecount  :: PCREInfo
+info_namecount  = PCREInfo 8
+info_nametable  :: PCREInfo
+info_nametable  = PCREInfo 9
+info_studysize  :: PCREInfo
+info_studysize  = PCREInfo 10
+info_default_tables  :: PCREInfo
+info_default_tables  = PCREInfo 11
+info_okpartial  :: PCREInfo
+info_okpartial  = PCREInfo 12
+info_jchanged  :: PCREInfo
+info_jchanged  = PCREInfo 13
+info_hascrorlf  :: PCREInfo
+info_hascrorlf  = PCREInfo 14
+info_minlength  :: PCREInfo
+info_minlength  = PCREInfo 15
+
+{-# LINE 54 "Regex.hsc" #-}
 
 combineOptions :: [PCREOption] -> PCREOption
 combineOptions = PCREOption . foldr ((.|.) . unPCREOption) 0
+combineExecOptions :: [PCREExecOption] -> PCREExecOption
+combineExecOptions = foldr (.|.) 0
 type PCRE = ()
+type PCREExtra = ()
 foreign import ccall unsafe "pcre.h pcre_compile"
         c_pcre_compile :: CString
                           -> PCREOption
