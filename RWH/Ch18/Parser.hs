@@ -5,20 +5,9 @@ import Data.Char
 data Parser a = ParserD {execParser::String -> Maybe (a, String)}
 instance Monad Parser where
   return v = ParserD $ \inp -> Just (v, inp)
-  p >>= f = ParserD $ \inp -> 
-        case parser space inp of
-          Nothing -> Nothing
-          Just (v, out) -> 
-            case parser p inp of
-              Nothing -> Nothing
-              Just (v', out') -> case parser (f v') out' of
-                Nothing -> Nothing
-                Just (v'', out'') -> case parser space out'' of
-                  Nothing -> Nothing
-                  Just (v''', out''') -> Just (v'', out''')
---   p >>= f = ParserD $ \inp -> case parser p inp of
---                                 Nothing -> Nothing
---                                 Just (v, out) -> parser (f v) out
+  p >>= f = ParserD $ \inp -> case parser p inp of
+                                Nothing -> Nothing
+                                Just (v, out) -> parser (f v) out
 parser :: Parser a -> String -> Maybe (a, String)
 parser = execParser
 failure :: Parser a
@@ -84,21 +73,25 @@ constant = do
     tail <- many alphanum
     return (head:tail)
 
-operator :: Parser String
-operator = do
+_operator :: Parser String
+_operator = do
     op <- char '+' +++ char '-' +++ char '*' +++ char '/' +++ char '='
     return [op]
-formula :: Parser (Int, String, Int)
-formula = do
-  arg1 <- nat
-  space
-  op <- operator
-  space
-  arg2 <- nat
-  return (arg1, op, arg2)
+operator :: Parser String
+operator = token _operator
 token :: Parser a -> Parser a
 token p = do
   space
   cs <- p
   space
   return cs
+integer :: Parser Int
+integer = token nat
+formula :: Parser (Int, String, Int)
+formula = do
+  arg1 <- integer
+  space
+  op <- operator
+  space
+  arg2 <- integer
+  return (arg1, op, arg2)
