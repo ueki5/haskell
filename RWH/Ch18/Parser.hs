@@ -2,7 +2,7 @@ module Ch18.Parser where
 import Control.Monad
 import Data.Char
 
--- パーサー
+-- 繝代�繧ｵ繝ｼ
 data Parser a = ParserD {execParser::String -> Maybe (a, String)}
 instance Monad Parser where
   return v = ParserD $ \inp -> Just (v, inp)
@@ -24,7 +24,11 @@ p +++ q = ParserD $ \inp -> case parser p inp of
 (&&&) :: Parser a -> Parser a -> Parser a
 p &&& q = ParserD $ \inp -> case parser p inp of
                       Nothing -> Nothing
-                      Just (v, out) -> parser q inp
+                      Just (v, out) -> case parser q inp of
+                        Nothing -> Nothing
+                        Just (v', out') -> if out == out' then Just (v', out')
+                                                      else Nothing
+                                         
 sat :: (Char -> Bool) -> Parser Char
 sat p = do 
   x <- item
@@ -74,25 +78,25 @@ constant = do
     tail <- many alphanum
     return (head:tail)
 
-_operator :: Parser String
-_operator = do
+operator :: Parser String
+operator = do
     op <- char '+' +++ char '-' +++ char '*' +++ char '/' +++ char '='
     return [op]
-operator :: Parser String
-operator = token _operator
 token :: Parser a -> Parser a
 token p = do
   space
   cs <- p
   space
   return cs
-integer :: Parser Int
-integer = token nat
+op :: Parser String
+op = token operator
+int :: Parser Int
+int = token nat
 formula :: Parser (Int, String, Int)
 formula = do
-  arg1 <- integer
+  arg1 <- int
   space
-  op <- operator
+  opr <- op
   space
-  arg2 <- integer
-  return (arg1, op, arg2)
+  arg2 <- int
+  return (arg1, opr, arg2)
