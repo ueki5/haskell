@@ -2,7 +2,7 @@ module Ch18.Parser where
 import Control.Monad
 import Data.Char
 
--- 繝代�繧ｵ繝ｼ
+-- Parser
 data Parser a = ParserD {execParser::String -> Maybe (a, String)}
 instance Monad Parser where
   return v = ParserD $ \inp -> Just (v, inp)
