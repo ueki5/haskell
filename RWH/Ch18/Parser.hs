@@ -100,5 +100,3 @@ formula = do
   space
   arg2 <- int
   return (arg1, opr, arg2)
-
-
