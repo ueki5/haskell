@@ -3,6 +3,11 @@ import Control.Monad
 import Data.Char
 
 -- Parser
+data Element = UInt Int
+             | Plus
+             | Minus
+             | Mult
+             | Div
 data Parser a = ParserD {execParser::String -> Maybe (a, String)}
 instance Monad Parser where
   return v = ParserD $ \inp -> Just (v, inp)
