@@ -9,7 +9,6 @@ import System.Cmd (system)
 import System.FilePath
 import System.Directory (getCurrentDirectory)
 
-main :: IO ()
 main = do
     -- defaultMainWithHooks $ defaultUserHooks {runTests = sampleTest}
     -- defaultMainWithHooks $ autoconfUserHooks {runTests = sampleTest}
