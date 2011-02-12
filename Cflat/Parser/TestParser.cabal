@@ -1,0 +1,9 @@
+name: TestParser
+version: 0.0
+build-depends: base, mtl, directory, HUnit
+exposed-modules: Parser
+
+-- ˆÈ‰ºAŒJ‚è•Ô‚µ
+executable: TestParser
+-- buildable: False
+main-is: TestParser.hs
