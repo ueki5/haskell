@@ -5,7 +5,12 @@ import Test.HUnit
 import Control.Monad.State
 import Control.Exception
 import System.Directory
+import System.Environment
 
+main = do
+    getProgName >>= print
+    runTestTT test_int
+    runTestTT testIO
 test_int = "test_int" ~: test [ 
                "int 0" ~: (parser int "0")  ~?= Just (TpInt 0,"")
               ,"int 1" ~: (parser int "1")  ~?= Just (TpInt 1,"")
