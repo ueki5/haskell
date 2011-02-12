@@ -83,11 +83,6 @@ opr = do
       '+' -> return Plus
       '-' -> return Minus
 formula :: Parser Formula
--- formula = do
---   arg1 <- int
---   op   <- opr
---   arg2 <- int
---   return $ Op op (Tp arg1) (Tp arg2)
 formula = do
             arg1 <- int
             op   <- opr
