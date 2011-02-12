@@ -12,8 +12,8 @@ import System.Directory (getCurrentDirectory)
 main :: IO ()
 main = do
     -- defaultMainWithHooks $ defaultUserHooks {runTests = sampleTest}
-    defaultMainWithHooks $ autoconfUserHooks {runTests = sampleTest}
-
+    -- defaultMainWithHooks $ autoconfUserHooks {runTests = sampleTest}
+    defaultMainWithHooks $ simpleUserHooks {runTests = sampleTest}
     where
         sampleTest _ _ pkgDisc bInfo = do
             -- 現在のディレクトリのパス名を取得
