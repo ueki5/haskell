@@ -85,22 +85,11 @@ opr = do
 formula :: Parser Formula
 formula = do
             arg1 <- int
-            op   <- opr
-            frm  <- formula1
-            return $ Op op (Tp arg1) frm
-           +++ 
-          do
-            arg1 <- int
-            return $ Tp arg1
--- formula = do
---             arg1 <- int
---             do
---               op <- opr
---               frm <- formula1
---               return $ Op op (Tp arg1) frm
---             +++ return arg1
-formula1 :: Parser Formula
-formula1 = formula
+            do
+              op <- opr
+              frm <- formula
+              return (Op op (Tp arg1) frm)
+              +++ return (Tp arg1)
 apply :: (a -> b) -> Maybe (a,String) -> Maybe b
 apply _ Nothing = Nothing
 apply f (Just (a,s)) = Just (f a)
@@ -108,5 +97,5 @@ calc :: Formula -> Int
 calc (Tp (TpInt n)) = n
 calc (Op Plus form1 form2) = (calc form1) + (calc form2)
 calc (Op Minus form1 form2) = (calc form1) - (calc form2)
-eval :: Parser Formula -> String -> Maybe Int
-eval p s = apply calc (parser p s)
+eval :: String -> Maybe Int
+eval s = apply calc (parser formula s)
