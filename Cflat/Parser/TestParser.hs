@@ -10,8 +10,9 @@ import System.Environment
 main = do
     getProgName >>= print
     runTestTT test_int
-    runTestTT testIO
-test_int = "test_int" ~: test [ 
+    runTestTT test_form
+    runTestTT test_form_invalid
+test_int = "test int" ~: test [ 
                "int 0" ~: (parser int "0")  ~?= Just (TpInt 0,"")
               ,"int 1" ~: (parser int "1")  ~?= Just (TpInt 1,"")
               ,"int 2" ~: (parser int "2")  ~?= Just (TpInt 2,"")
@@ -28,22 +29,39 @@ test_int = "test_int" ~: test [
               ,"int 0A" ~: (parser int "0A")  ~?= Just (TpInt 0,"A")
               ,"int A0" ~: (parser int "A0")  ~?= Nothing
               ,"null test1" ~: null [] ~=? True
-              ,"null test2" ~: null [] ~=? False
+              -- ,"null test2" ~: null [] ~=? False
+           ]
+test_form = "test form" ~: test [ 
+               "form 1+1" ~: (parser form "1+1")  ~?= Just (Op Plus (Tp (TpInt 1)) (Tp (TpInt 1)),"")
+              ,"form 1 + 1" ~: (parser form "1 + 1")  ~?= Just (Op Plus (Tp (TpInt 1)) (Tp (TpInt 1)),"")
+              ,"form 1-1" ~: (parser form "1-1")  ~?= Just (Op Minus (Tp (TpInt 1)) (Tp (TpInt 1)),"")
+              ,"form 1*1" ~: (parser form "1*1")  ~?= Just (Op Mult (Tp (TpInt 1)) (Tp (TpInt 1)),"")
+              ,"form 1/1" ~: (parser form "1/1")  ~?= Just (Op Div (Tp (TpInt 1)) (Tp (TpInt 1)),"")
+              ,"form 1+1*1" ~: (parser form "1+1*1")  ~?= Just (Op Plus (Tp (TpInt 1)) (Op Mult (Tp (TpInt 1)) (Tp (TpInt 1))) , "")
+              ,"form 1*1+1" ~: (parser form "1*1+1")  ~?= Just (Op Plus (Op Mult (Tp (TpInt 1)) (Tp (TpInt 1))) (Tp (TpInt 1)) , "")
+              ,"form 1*1*1*1*1*1+1" ~: (parser form "1*1*1*1*1*1+1")  ~?= Just (Op Plus (Op Mult (Tp (TpInt 1)) (Op Mult (Tp (TpInt 1)) (Op Mult (Tp (TpInt 1)) (Op Mult (Tp (TpInt 1)) (Op Mult (Tp (TpInt 1)) (Tp (TpInt 1))))))) (Tp (TpInt 1)),"")
+           ]
+test_form_invalid = "test form invalid" ~: test [ 
+               "form 1++1" ~: (parser form "1++1")  ~?= Nothing
+              ,"form +1" ~: (parser form "+1")  ~?= Nothing
+              ,"form D" ~: (parser form "D")  ~?= Nothing
+              ,"form 1+" ~: (parser form "1+")  ~?= Nothing
+              ,"form null" ~: (parser form "")  ~?= Nothing
            ]
 
-createEmptyFile file = writeFile file "this is temp file"
-testIO = "createEmptyFile" ~:
-         (do 
-           (bracket
-             (return ())
-             -- (\dmy  -> return ())
-             (\dmy  -> removeFile file)
-             (\dmy' -> (do
-                 (doesFileExist file >>= return . not) @? "Pre-condition test: File already exist."
-                 createEmptyFile file
-                 exi <- doesFileExist file
-                 exi @? "file is not exists."
-                 txt <- readFile file
-                 txt @=? "this is temp file")))
-           (doesFileExist file >>= \ret -> return . not $ ret) @? "Post-condition test: file is not removed.")
-       where file = "sample.txt"
+-- createEmptyFile file = writeFile file "this is temp file"
+-- testIO = "createEmptyFile" ~:
+--          (do 
+--            (bracket
+--              (return ())
+--              -- (\dmy  -> return ())
+--              (\dmy  -> removeFile file)
+--              (\dmy' -> (do
+--                  (doesFileExist file >>= return . not) @? "Pre-condition test: File already exist."
+--                  createEmptyFile file
+--                  exi <- doesFileExist file
+--                  exi @? "file is not exists."
+--                  txt <- readFile file
+--                  txt @=? "this is temp file")))
+--            (doesFileExist file >>= \ret -> return . not $ ret) @? "Post-condition test: file is not removed.")
+--        where file = "sample.txt"

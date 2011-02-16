@@ -76,18 +76,14 @@ int :: Parser Type
 int = do
   cs <- token $ many1 digit
   return $ TpInt (read cs)
-opr :: Parser Operator
-opr = do
-    operator <- token $
-                    char '+' 
-                +++ char '-'
-                +++ char '*'
-                +++ char '/'
-    case operator of
-      '+' -> return Plus
-      '-' -> return Minus
-      '*' -> return Mult
-      '/' -> return Div
+plus :: Parser Operator
+plus = token (char '+') >> return Plus
+minus :: Parser Operator
+minus = token (char '-') >> return Minus
+mult :: Parser Operator
+mult = token (char '*') >> return Mult
+divide :: Parser Operator
+divide = token (char '/') >> return Div
 -- ‰EŒ‹‡
 formular :: Parser Formula
 formular = do
@@ -97,15 +93,15 @@ formular = do
               frm <- formular
               return (Op op (Tp arg) frm)
               +++ return (Tp arg)
--- ¶Œ‹‡
--- formulal :: Parser Formula
--- formulal = do
---             arg1 <- int
---             do
---               op <- opr
---               arg2 <- int
---               return (Op op (Tp arg1) (Tp arg2))
---               +++ return (Tp arg)
+-- ¶Œ‹‡i‚Ü‚¾‚»‚¤‚È‚Á‚Ä‚¢‚Ü‚¹‚ñj
+formulal :: Parser Formula
+formulal = do
+            arg1 <- int
+            do
+              op <- opr
+              arg2 <- int
+              return (Op op (Tp arg1) (Tp arg2))
+              +++ return (Tp arg1)
 apply :: (a -> b) -> Maybe (a,String) -> Maybe b
 apply _ Nothing = Nothing
 apply f (Just (a,s)) = Just (f a)
@@ -115,5 +111,37 @@ calc (Op Plus form1 form2) = (calc form1) + (calc form2)
 calc (Op Minus form1 form2) = (calc form1) - (calc form2)
 calc (Op Mult form1 form2) = (calc form1) * (calc form2)
 calc (Op Div form1 form2) = (calc form1) `div` (calc form2)
-eval :: String -> Maybe Int
-eval s = apply calc (parser formular s)
+-- eval :: String -> Maybe Int
+-- eval s = apply calc (parser formular s)
+
+-- Š|ZAœZ‚Æ‘«ZAˆøZ
+opr1 :: Parser Operator
+opr1 = plus +++ minus
+opr2 :: Parser Operator
+opr2 = mult +++ divide
+opr :: Parser Operator
+opr =  opr1 +++ opr2
+form :: Parser Formula
+form = do
+            frml <- form1
+            do
+              op  <- opr1
+              frmr <- form1
+              return (Op op frml frmr)
+              +++ return frml
+form1 :: Parser Formula
+form1 = do
+            frml <- form2
+            do
+              op  <- opr2
+              frmr <- form2
+              return (Op op frml frmr)
+              +++ return frml
+form2 :: Parser Formula
+form2 = do
+            frml <- int
+            do
+              op  <- opr2
+              frmr <- form2
+              return (Op op (Tp frml) frmr)
+              +++ return (Tp frml)
