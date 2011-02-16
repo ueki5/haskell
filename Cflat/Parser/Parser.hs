@@ -82,7 +82,7 @@ opr = do
     case operator of
       '+' -> return Plus
       '-' -> return Minus
--- ¶Œ‹‡
+-- ‰EŒ‹‡
 formula :: Parser Formula
 formula = do
             arg1 <- int
