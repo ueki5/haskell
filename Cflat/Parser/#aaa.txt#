@@ -1,2 +1,0 @@
-Just (Op Plus (Op Mult (Tp (TpInt 1)) (Tp (TpInt 1))) (Tp (TpInt 1)),"")
-Just (Op Plus (Tp (TpInt 1)) (Op Mult (Tp (TpInt 1)) (Tp (TpInt 1))),"")
