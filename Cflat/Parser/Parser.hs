@@ -92,6 +92,13 @@ formula = do
           do
             arg1 <- int
             return $ Tp arg1
+-- formula = do
+--             arg1 <- int
+--             do
+--               op <- opr
+--               frm <- formula1
+--               return $ Op op (Tp arg1) frm
+--             +++ return arg1
 formula1 :: Parser Formula
 formula1 = formula
 apply :: (a -> b) -> Maybe (a,String) -> Maybe b
