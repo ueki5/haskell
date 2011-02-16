@@ -78,19 +78,34 @@ int = do
   return $ TpInt (read cs)
 opr :: Parser Operator
 opr = do
-    operator <- token $ char '+' +++ char '-'
+    operator <- token $
+                    char '+' 
+                +++ char '-'
+                +++ char '*'
+                +++ char '/'
     case operator of
       '+' -> return Plus
       '-' -> return Minus
+      '*' -> return Mult
+      '/' -> return Div
 -- âEåãçá
-formula :: Parser Formula
-formula = do
-            arg1 <- int
+formular :: Parser Formula
+formular = do
+            arg <- int
             do
-              op <- opr
-              frm <- formula
-              return (Op op (Tp arg1) frm)
-              +++ return (Tp arg1)
+              op  <- opr
+              frm <- formular
+              return (Op op (Tp arg) frm)
+              +++ return (Tp arg)
+-- ç∂åãçá
+-- formulal :: Parser Formula
+-- formulal = do
+--             arg1 <- int
+--             do
+--               op <- opr
+--               arg2 <- int
+--               return (Op op (Tp arg1) (Tp arg2))
+--               +++ return (Tp arg)
 apply :: (a -> b) -> Maybe (a,String) -> Maybe b
 apply _ Nothing = Nothing
 apply f (Just (a,s)) = Just (f a)
@@ -98,5 +113,7 @@ calc :: Formula -> Int
 calc (Tp (TpInt n)) = n
 calc (Op Plus form1 form2) = (calc form1) + (calc form2)
 calc (Op Minus form1 form2) = (calc form1) - (calc form2)
+calc (Op Mult form1 form2) = (calc form1) * (calc form2)
+calc (Op Div form1 form2) = (calc form1) `div` (calc form2)
 eval :: String -> Maybe Int
-eval s = apply calc (parser formula s)
+eval s = apply calc (parser formular s)
