@@ -96,12 +96,25 @@ formular = do
 -- 左結合（まだそうなっていません）
 formulal :: Parser Formula
 formulal = do
-            arg1 <- int
-            do
-              op <- opr
-              arg2 <- int
-              return (Op op (Tp arg1) (Tp arg2))
-              +++ return (Tp arg1)
+            frm <- (term +++ fint)
+            return frm
+fint :: Parser Formula
+fint = do
+  arg <- int
+  return (Tp arg)
+term :: Parser Formula
+term = do
+  arg1 <- int
+  op <- opr
+  arg2 <- int
+  return (Op op (Tp arg1) (Tp arg2))
+term2 :: Parser Formula
+term2 = do
+  trm <- term
+  op <- opr
+  arg <- int
+  return (Op op trm (Tp arg))
+
 apply :: (a -> b) -> Maybe (a,String) -> Maybe b
 apply _ Nothing = Nothing
 apply f (Just (a,s)) = Just (f a)
@@ -121,6 +134,8 @@ opr2 :: Parser Operator
 opr2 = mult +++ divide
 opr :: Parser Operator
 opr =  opr1 +++ opr2
+
+-- 演算子の優先度（掛除＞足引）
 form :: Parser Formula
 form = do
             frml <- form1
