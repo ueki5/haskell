@@ -84,37 +84,31 @@ mult :: Parser Operator
 mult = token (char '*') >> return Mult
 divide :: Parser Operator
 divide = token (char '/') >> return Div
--- 右結合
-formular :: Parser Formula
-formular = do
-            arg <- int
-            do
-              op  <- opr
-              frm <- formular
-              return (Op op (Tp arg) frm)
-              +++ return (Tp arg)
--- 左結合（まだそうなっていません）
-formulal :: Parser Formula
-formulal = do
-            frm <- (term +++ fint)
-            return frm
 fint :: Parser Formula
 fint = do
   arg <- int
   return (Tp arg)
-term :: Parser Formula
-term = do
-  arg1 <- int
-  op <- opr
-  arg2 <- int
-  return (Op op (Tp arg1) (Tp arg2))
-term2 :: Parser Formula
-term2 = do
-  trm <- term
-  op <- opr
-  arg <- int
-  return (Op op trm (Tp arg))
-
+-- 右結合
+formular :: Parser Operator -> Parser Formula -> Parser Formula
+formular o f = do
+            arg <- f
+            do
+              op  <- o
+              frm <- formular o f
+              return $ Op op arg frm
+              +++ return arg
+-- 左結合
+formulal :: Parser Operator -> Parser Formula -> Parser Formula
+formulal o f = do
+  val <- f
+  exprl val
+  where  
+    exprl :: Formula -> Parser Formula
+    exprl frm = do
+      op <- o
+      val <- f
+      exprl $ Op op frm val
+      +++ return frm
 apply :: (a -> b) -> Maybe (a,String) -> Maybe b
 apply _ Nothing = Nothing
 apply f (Just (a,s)) = Just (f a)
@@ -136,27 +130,12 @@ opr :: Parser Operator
 opr =  opr1 +++ opr2
 
 -- 演算子の優先度（掛除＞足引）
+-- トップレベル（右結合）
 form :: Parser Formula
-form = do
-            frml <- form1
-            do
-              op  <- opr1
-              frmr <- form1
-              return (Op op frml frmr)
-              +++ return frml
+form = form1 +++ form2
+-- 掛除レベル（左結合）
 form1 :: Parser Formula
-form1 = do
-            frml <- form2
-            do
-              op  <- opr2
-              frmr <- form2
-              return (Op op frml frmr)
-              +++ return frml
+form1 = formulal opr1 fint
+-- 足引レベル（右結合）
 form2 :: Parser Formula
-form2 = do
-            frml <- int
-            do
-              op  <- opr2
-              frmr <- form2
-              return (Op op (Tp frml) frmr)
-              +++ return (Tp frml)
+form2 = formulal opr2 fint
