@@ -131,6 +131,7 @@ opr2 = mult +++ divide
 -- トップレベル
 form :: Parser Formula
 form = form1 +++ form2
+
 -- 足引レベル（左結合）
 form1 :: Parser Formula
 form1 = formulal opr1 fint
