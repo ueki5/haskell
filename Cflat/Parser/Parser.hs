@@ -126,16 +126,14 @@ opr1 :: Parser Operator
 opr1 = plus +++ minus
 opr2 :: Parser Operator
 opr2 = mult +++ divide
-opr :: Parser Operator
-opr =  opr1 +++ opr2
 
 -- 演算子の優先度（掛除＞足引）
--- トップレベル（右結合）
+-- トップレベル
 form :: Parser Formula
 form = form1 +++ form2
 -- 足引レベル（左結合）
 form1 :: Parser Formula
 form1 = formulal opr1 fint
--- 掛除レベル（右結合）
+-- 掛除レベル（右結合という事にしてみました）
 form2 :: Parser Formula
 form2 = formular opr2 fint
