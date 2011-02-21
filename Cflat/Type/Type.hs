@@ -8,5 +8,5 @@ data Operator = Plus
              | Div
               deriving (Eq,Show)
 data Formula = Tp Type
-             | Op Operator Formula Formula
+                      | Op Operator Formula Formula
               deriving (Eq,Show)

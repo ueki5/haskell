@@ -132,10 +132,10 @@ opr =  opr1 +++ opr2
 -- 演算子の優先度（掛除＞足引）
 -- トップレベル（右結合）
 form :: Parser Formula
-form = form1 +++ form2
+form = form1
 -- 掛除レベル（左結合）
 form1 :: Parser Formula
-form1 = formulal opr1 fint
+form1 = formulal opr1 fint +++ form2
 -- 足引レベル（右結合）
 form2 :: Parser Formula
-form2 = formulal opr2 fint
+form2 = formulal opr2 fint +++ form1
