@@ -133,9 +133,9 @@ opr =  opr1 +++ opr2
 -- トップレベル（右結合）
 form :: Parser Formula
 form = form1 +++ form2
--- 掛除レベル（左結合）
+-- 足引レベル（左結合）
 form1 :: Parser Formula
 form1 = formulal opr1 fint
--- 足引レベル（右結合）
+-- 掛除レベル（右結合）
 form2 :: Parser Formula
-form2 = formulal opr2 fint
+form2 = formular opr2 fint

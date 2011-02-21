@@ -10,8 +10,13 @@ import System.Environment
 main = do
     getProgName >>= print
     runTestTT test_int
-    runTestTT test_form
-    runTestTT test_form_invalid
+    -- runTestTT testIO
+    -- runTestTT test_form
+    -- runTestTT test_form_invalid
+    runTestTT test_form_left
+    runTestTT test_form_right
+    runTestTT test_form_lr
+
 test_int = "test int" ~: test [ 
                "int 0" ~: (parser int "0")  ~?= Just (TpInt 0,"")
               ,"int 1" ~: (parser int "1")  ~?= Just (TpInt 1,"")
@@ -31,6 +36,24 @@ test_int = "test int" ~: test [
               ,"null test1" ~: null [] ~=? True
               -- ,"null test2" ~: null [] ~=? False
            ]
+
+createEmptyFile file = writeFile file "this is temp file"
+testIO = "createEmptyFile" ~:
+         (do 
+           (bracket
+             (return ())
+             -- (\dmy  -> return ())
+             (\dmy  -> removeFile file)
+             (\dmy' -> (do
+                 (doesFileExist file >>= return . not) @? "Pre-condition test: File already exist."
+                 createEmptyFile file
+                 exi <- doesFileExist file
+                 exi @? "file is not exists."
+                 txt <- readFile file
+                 txt @=? "this is temp file")))
+           (doesFileExist file >>= \ret -> return . not $ ret) @? "Post-condition test: file is not removed.")
+       where file = "sample.txt"
+
 test_form = "test form" ~: test [ 
                "form 1+1" ~: (parser form "1+1")  ~?= Just (Op Plus (Tp (TpInt 1)) (Tp (TpInt 1)),"")
               ,"form 1 + 1" ~: (parser form "1 + 1")  ~?= Just (Op Plus (Tp (TpInt 1)) (Tp (TpInt 1)),"")
@@ -48,20 +71,24 @@ test_form_invalid = "test form invalid" ~: test [
               ,"form 1+" ~: (parser form "1+")  ~?= Nothing
               ,"form null" ~: (parser form "")  ~?= Nothing
            ]
+test_form_left = "test form left" ~: test [ 
+               "form left[+]" ~: (parser form1 "1+2")  ~?= Just (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form left[++]" ~: (parser form1 "1+2+3")  ~?= Just (Op Plus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+              ,"form left[-]" ~: (parser form1 "1-2")  ~?= Just (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form left[--]" ~: (parser form1 "1-2-3")  ~?= Just (Op Minus (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+              ,"form left[+-]" ~: (parser form1 "1+2-3")  ~?= Just (Op Minus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+              ,"form left[-+]" ~: (parser form1 "1-2+3")  ~?= Just (Op Plus (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+           ]
+test_form_right = "test form right" ~: test [ 
+               "form right[*]" ~: (parser form2 "1*2")  ~?= Just (Op Mult (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form right[**]" ~: (parser form2 "1*2*3")  ~?= Just (Op Mult (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+              ,"form right[/]" ~: (parser form2 "1/2")  ~?= Just (Op Div (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form right[//]" ~: (parser form2 "1/2/3")  ~?= Just (Op Div (Tp (TpInt 1)) (Op Div (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+              ,"form right[*/]" ~: (parser form2 "1*2/3")  ~?= Just (Op Mult (Tp (TpInt 1)) (Op Div (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+              ,"form right[/*]" ~: (parser form2 "1/2*3")  ~?= Just (Op Div (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+           ]
+test_form_lr = "test form lr" ~: test [ 
+               "form lr[+*]" ~: (parser form "1+2*3")  ~?= Just (Op Plus (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+              ,"form lr[*+]" ~: (parser form "1*2+3")  ~?= Just (Op Plus (Op Mult (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+           ]
 
--- createEmptyFile file = writeFile file "this is temp file"
--- testIO = "createEmptyFile" ~:
---          (do 
---            (bracket
---              (return ())
---              -- (\dmy  -> return ())
---              (\dmy  -> removeFile file)
---              (\dmy' -> (do
---                  (doesFileExist file >>= return . not) @? "Pre-condition test: File already exist."
---                  createEmptyFile file
---                  exi <- doesFileExist file
---                  exi @? "file is not exists."
---                  txt <- readFile file
---                  txt @=? "this is temp file")))
---            (doesFileExist file >>= \ret -> return . not $ ret) @? "Post-condition test: file is not removed.")
---        where file = "sample.txt"
