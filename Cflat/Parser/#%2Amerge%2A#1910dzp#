@@ -18,12 +18,12 @@ item :: Parser Char
 item = Parser $ \inp -> case inp of
   [] -> Nothing
   (c:cs) -> Just (c, cs)
--- ‚Ç‚¿‚ç‚©‚ª¬Œ÷‚µ‚½ê‡‚ÉÌ—p
+-- ã©ã¡ã‚‰ã‹ãŒæˆåŠŸã—ãŸå ´åˆã«æ¡ç”¨
 (+++) :: Parser a -> Parser a -> Parser a
 p +++ q = Parser $ \inp -> case parser p inp of
                       Nothing -> parser q inp
                       Just (v, out) -> Just (v, out)
--- ‘o•û‚ª¬Œ÷‚µ‚½ê‡‚ÉÌ—p
+-- åŒæ–¹ãŒæˆåŠŸã—ãŸå ´åˆã«æ¡ç”¨
 (&&&) :: Parser a -> Parser a -> Parser a
 p &&& q = Parser $ \inp -> case parser p inp of
                       Nothing -> Nothing
@@ -88,7 +88,7 @@ fint :: Parser Formula
 fint = do
   arg <- int
   return (Tp arg)
--- ‰EŒ‹‡
+-- å³çµåˆ
 formular :: Parser Operator -> Parser Formula -> Parser Formula
 formular o f = do
             arg <- f
@@ -97,7 +97,7 @@ formular o f = do
               frm <- formular o f
               return $ Op op arg frm
               +++ return arg
--- ¶Œ‹‡
+-- å·¦çµåˆ
 formulal :: Parser Operator -> Parser Formula -> Parser Formula
 formulal o f = do
   val <- f
@@ -121,7 +121,7 @@ calc (Op Div form1 form2) = (calc form1) `div` (calc form2)
 -- eval :: String -> Maybe Int
 -- eval s = apply calc (parser formular s)
 
--- Š|ZAœZ‚Æ‘«ZAˆøZ
+-- æ›ç®—ã€é™¤ç®—ã¨è¶³ç®—ã€å¼•ç®—
 opr1 :: Parser Operator
 opr1 = plus +++ minus
 opr2 :: Parser Operator
@@ -129,13 +129,13 @@ opr2 = mult +++ divide
 opr :: Parser Operator
 opr =  opr1 +++ opr2
 
--- ‰‰Zq‚Ì—Dæ“xiŠ|œ„‘«ˆøj
--- ƒgƒbƒvƒŒƒxƒ‹i‰EŒ‹‡j
+-- æ¼”ç®—å­ã®å„ªå…ˆåº¦ï¼ˆæ›é™¤ï¼è¶³å¼•ï¼‰
+-- ãƒˆãƒƒãƒ—ãƒ¬ãƒ™ãƒ«ï¼ˆå³çµåˆï¼‰
 form :: Parser Formula
-form = form1 +++ form2
--- ‘«ˆøƒŒƒxƒ‹i¶Œ‹‡j
+form = form1
+-- æ›é™¤ãƒ¬ãƒ™ãƒ«ï¼ˆå·¦çµåˆï¼‰
 form1 :: Parser Formula
-form1 = formulal opr1 fint
--- Š|œƒŒƒxƒ‹i‰EŒ‹‡j
+form1 = formulal opr1 fint +++ form2
+-- è¶³å¼•ãƒ¬ãƒ™ãƒ«ï¼ˆå³çµåˆï¼‰
 form2 :: Parser Formula
-form2 = formular opr2 fint
+form2 = formulal opr2 fint +++ form1
