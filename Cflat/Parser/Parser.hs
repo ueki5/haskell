@@ -71,11 +71,16 @@ token p = do
   cs <- p
   space
   return cs
-
+-- 数値
 int :: Parser Type
 int = do
   cs <- token $ many1 digit
   return $ TpInt (read cs)
+fint :: Parser Formula
+fint = do
+  arg <- int
+  return (Tp arg)
+-- 演算子
 plus :: Parser Operator
 plus = token (char '+') >> return Plus
 minus :: Parser Operator
@@ -84,57 +89,38 @@ mult :: Parser Operator
 mult = token (char '*') >> return Mult
 divide :: Parser Operator
 divide = token (char '/') >> return Div
-fint :: Parser Formula
-fint = do
-  arg <- int
-  return (Tp arg)
--- 右結合
-formular :: Parser Operator -> Parser Formula -> Parser Formula
-formular o f = do
-            arg <- f
-            do
-              op  <- o
-              frm <- formular o f
-              return $ Op op arg frm
-              +++ return arg
--- 左結合
-formulal :: Parser Operator -> Parser Formula -> Parser Formula
-formulal o f = do
-  val <- f
-  exprl val
-  where  
-    exprl :: Formula -> Parser Formula
-    exprl frm = do
-      op <- o
-      val <- f
-      exprl $ Op op frm val
-      +++ return frm
-apply :: (a -> b) -> Maybe (a,String) -> Maybe b
-apply _ Nothing = Nothing
-apply f (Just (a,s)) = Just (f a)
-calc :: Formula -> Int
-calc (Tp (TpInt n)) = n
-calc (Op Plus form1 form2) = (calc form1) + (calc form2)
-calc (Op Minus form1 form2) = (calc form1) - (calc form2)
-calc (Op Mult form1 form2) = (calc form1) * (calc form2)
-calc (Op Div form1 form2) = (calc form1) `div` (calc form2)
--- eval :: String -> Maybe Int
--- eval s = apply calc (parser formular s)
-
--- 掛算、除算と足算、引算
+-- 足算、引算と掛算、除算をグループ化
 opr1 :: Parser Operator
 opr1 = plus +++ minus
 opr2 :: Parser Operator
 opr2 = mult +++ divide
-
--- 演算子の優先度（掛除＞足引）
--- トップレベル
-form :: Parser Formula
-form = form1 +++ form2
-
+opr :: Parser Operator
+opr = opr1 +++ opr2
 -- 足引レベル（左結合）
-form1 :: Parser Formula
-form1 = formulal opr1 fint
--- 掛除レベル（右結合という事にしてみました）
-form2 :: Parser Formula
-form2 = formular opr2 fint
+form :: Parser Formula
+form = do
+  frm <- form1
+  exprl frm
+  where  
+    exprl :: Formula -> Parser Formula
+    exprl frm = do
+      op <- opr1
+      val <- form1
+      exprl $ Op op frm val
+      +++ return frm
+--掛除レベル （右結合）
+form1 = do
+  frm <- form2
+  do
+      op <- opr2
+      frm' <- form1
+      return $ Op op frm frm'
+      +++ return frm
+--掛除レベル （右結合）※
+form2 = do
+  val <- fint
+  do
+      op <- opr2
+      frm <- form2
+      return $ Op op val frm
+      +++ return val

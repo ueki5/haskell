@@ -72,23 +72,24 @@ test_form_invalid = "test form invalid" ~: test [
               ,"form null" ~: (parser form "")  ~?= Nothing
            ]
 test_form_left = "test form left" ~: test [ 
-               "form left[+]" ~: (parser form1 "1+2")  ~?= Just (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2)),"")
-              ,"form left[++]" ~: (parser form1 "1+2+3")  ~?= Just (Op Plus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
-              ,"form left[-]" ~: (parser form1 "1-2")  ~?= Just (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2)),"")
-              ,"form left[--]" ~: (parser form1 "1-2-3")  ~?= Just (Op Minus (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
-              ,"form left[+-]" ~: (parser form1 "1+2-3")  ~?= Just (Op Minus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
-              ,"form left[-+]" ~: (parser form1 "1-2+3")  ~?= Just (Op Plus (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+               "form left[+]" ~: (parser form "1+2")  ~?= Just (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form left[++]" ~: (parser form "1+2+3")  ~?= Just (Op Plus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+              ,"form left[-]" ~: (parser form "1-2")  ~?= Just (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form left[--]" ~: (parser form "1-2-3")  ~?= Just (Op Minus (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+              ,"form left[+-]" ~: (parser form "1+2-3")  ~?= Just (Op Minus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+              ,"form left[-+]" ~: (parser form "1-2+3")  ~?= Just (Op Plus (Op Minus (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
            ]
 test_form_right = "test form right" ~: test [ 
-               "form right[*]" ~: (parser form2 "1*2")  ~?= Just (Op Mult (Tp (TpInt 1)) (Tp (TpInt 2)),"")
-              ,"form right[**]" ~: (parser form2 "1*2*3")  ~?= Just (Op Mult (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
-              ,"form right[/]" ~: (parser form2 "1/2")  ~?= Just (Op Div (Tp (TpInt 1)) (Tp (TpInt 2)),"")
-              ,"form right[//]" ~: (parser form2 "1/2/3")  ~?= Just (Op Div (Tp (TpInt 1)) (Op Div (Tp (TpInt 2)) (Tp (TpInt 3))),"")
-              ,"form right[*/]" ~: (parser form2 "1*2/3")  ~?= Just (Op Mult (Tp (TpInt 1)) (Op Div (Tp (TpInt 2)) (Tp (TpInt 3))),"")
-              ,"form right[/*]" ~: (parser form2 "1/2*3")  ~?= Just (Op Div (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+               "form right[*]" ~: (parser form "1*2")  ~?= Just (Op Mult (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form right[**]" ~: (parser form "1*2*3")  ~?= Just (Op Mult (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+              ,"form right[/]" ~: (parser form "1/2")  ~?= Just (Op Div (Tp (TpInt 1)) (Tp (TpInt 2)),"")
+              ,"form right[//]" ~: (parser form "1/2/3")  ~?= Just (Op Div (Tp (TpInt 1)) (Op Div (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+              ,"form right[*/]" ~: (parser form "1*2/3")  ~?= Just (Op Mult (Tp (TpInt 1)) (Op Div (Tp (TpInt 2)) (Tp (TpInt 3))),"")
+              ,"form right[/*]" ~: (parser form "1/2*3")  ~?= Just (Op Div (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
            ]
 test_form_lr = "test form lr" ~: test [ 
                "form lr[+*]" ~: (parser form "1+2*3")  ~?= Just (Op Plus (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
               ,"form lr[*+]" ~: (parser form "1*2+3")  ~?= Just (Op Plus (Op Mult (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
+              ,"form lr[*+]" ~: (parser form "1+2+3*4")  ~?= Just (Op Plus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Op Mult (Tp (TpInt 3)) (Tp (TpInt 4))),"")
+              ,"form lr[*+]" ~: (parser form "1+2+3+4*5")  ~?= Just (Op Plus (Op Plus (Op Plus (Tp (TpInt 1))  (Tp (TpInt 2))) (Tp (TpInt 3))) (Op Mult (Tp (TpInt 4)) (Tp (TpInt 5))),"")
            ]
-
