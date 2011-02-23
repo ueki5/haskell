@@ -90,6 +90,6 @@ test_form_right = "test form right" ~: test [
 test_form_lr = "test form lr" ~: test [ 
                "form lr[+*]" ~: (parser form "1+2*3")  ~?= Just (Op Plus (Tp (TpInt 1)) (Op Mult (Tp (TpInt 2)) (Tp (TpInt 3))),"")
               ,"form lr[*+]" ~: (parser form "1*2+3")  ~?= Just (Op Plus (Op Mult (Tp (TpInt 1)) (Tp (TpInt 2))) (Tp (TpInt 3)),"")
-              ,"form lr[*+]" ~: (parser form "1+2+3*4")  ~?= Just (Op Plus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Op Mult (Tp (TpInt 3)) (Tp (TpInt 4))),"")
-              ,"form lr[*+]" ~: (parser form "1+2+3+4*5")  ~?= Just (Op Plus (Op Plus (Op Plus (Tp (TpInt 1))  (Tp (TpInt 2))) (Tp (TpInt 3))) (Op Mult (Tp (TpInt 4)) (Tp (TpInt 5))),"")
+              ,"form lr[++*]" ~: (parser form "1+2+3*4")  ~?= Just (Op Plus (Op Plus (Tp (TpInt 1)) (Tp (TpInt 2))) (Op Mult (Tp (TpInt 3)) (Tp (TpInt 4))),"")
+              ,"form lr[+++*]" ~: (parser form "1+2+3+4*5")  ~?= Just (Op Plus (Op Plus (Op Plus (Tp (TpInt 1))  (Tp (TpInt 2))) (Tp (TpInt 3))) (Op Mult (Tp (TpInt 4)) (Tp (TpInt 5))),"")
            ]

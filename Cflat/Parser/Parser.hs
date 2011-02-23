@@ -105,8 +105,8 @@ form = do
     exprl :: Formula -> Parser Formula
     exprl frm = do
       op <- opr1
-      val <- form1
-      exprl $ Op op frm val
+      frm' <- form1
+      exprl $ Op op frm frm'
       +++ return frm
 --掛除レベル （右結合）
 form1 = do
