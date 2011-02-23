@@ -116,7 +116,7 @@ form1 = do
       frm' <- form1
       return $ Op op frm frm'
       +++ return frm
---掛除レベル （右結合）※
+--掛除レベル （右結合）
 form2 = do
   val <- fint
   do
