@@ -113,7 +113,7 @@ form1 = do
   frm <- form2
   do
       op <- opr2
-      frm' <- form1
+      frm' <- form2
       return $ Op op frm frm'
       +++ return frm
 --掛除レベル （右結合）
