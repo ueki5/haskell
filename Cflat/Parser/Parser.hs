@@ -89,38 +89,42 @@ mult :: Parser Operator
 mult = token (char '*') >> return Mult
 divide :: Parser Operator
 divide = token (char '/') >> return Div
+power :: Parser Operator
+power = token (char '^') >> return Power
+
 -- 足算、引算と掛算、除算をグループ化
 opr1 :: Parser Operator
 opr1 = plus +++ minus
 opr2 :: Parser Operator
 opr2 = mult +++ divide
+opr3 :: Parser Operator
+opr3 = power
 opr :: Parser Operator
-opr = opr1 +++ opr2
--- 足引レベル（左結合）
+opr = opr1 +++ opr2 +++ opr3
+-- レベル０（優先度最低：足算、引算　左結合）
 form :: Parser Formula
 form = do
   frm <- form1
-  exprl frm
-  where  
-    exprl :: Formula -> Parser Formula
-    exprl frm = do
-      op <- opr1
-      frm' <- form1
-      exprl $ Op op frm frm'
-      +++ return frm
---掛除レベル （右結合）
+  exprl frm opr1 form1
+-- レベル１（優先度１：掛算、除算　右結合にしてみました）
 form1 = do
   frm <- form2
-  do
-      op <- opr2
-      frm' <- form2
-      return $ Op op frm frm'
-      +++ return frm
---掛除レベル （右結合）
+  exprr frm opr2 form1
+--レベル２（優先度２：べき乗　左結合）
 form2 = do
   val <- fint
-  do
-      op <- opr2
-      frm <- form2
-      return $ Op op val frm
-      +++ return val
+  exprl val opr3 fint
+--左結合
+exprl :: Formula -> Parser Operator -> Parser Formula -> Parser Formula
+exprl frm o p = do
+  op <- o
+  frm' <- p
+  exprl (Op op frm frm') o p
+  +++ return frm
+--右結合
+exprr :: Formula -> Parser Operator -> Parser Formula -> Parser Formula
+exprr frm o p = do
+  op <- o
+  frm' <- p
+  return (Op op frm frm')
+  +++ return frm

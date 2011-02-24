@@ -6,6 +6,7 @@ data Operator = Plus
              | Minus
              | Mult
              | Div
+             | Power
               deriving (Eq,Show)
 data Formula = Tp Type
                       | Op Operator Formula Formula
