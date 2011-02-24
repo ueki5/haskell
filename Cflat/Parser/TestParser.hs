@@ -251,6 +251,12 @@ test_form_opr1_3 = "test form opr1_3" ~: test [
                                                   (Op  Power
                                                           (Tp (TpInt 2))
                                                           (Tp (TpInt 3))),"")
+              ,"form opr3[1^2+3]" ~: (parser form "1^2+3")
+                                 ~?= Just (Op Plus 
+                                                  (Op Power 
+                                                          (Tp (TpInt 1))
+                                                          (Tp (TpInt 2)))
+                                                  (Tp (TpInt 3)),"")
               ,"form opr3[1+2+3^4]" ~: (parser form "1+2+3^4")
                                  ~?= Just (Op Plus 
                                                   (Op Plus 
@@ -259,12 +265,6 @@ test_form_opr1_3 = "test form opr1_3" ~: test [
                                                   (Op Power 
                                                           (Tp (TpInt 3))
                                                           (Tp (TpInt 4))),"")
-              ,"form opr3[1^2+3]" ~: (parser form "1^2+3")
-                                 ~?= Just (Op Plus 
-                                                  (Op Power 
-                                                          (Tp (TpInt 1))
-                                                          (Tp (TpInt 2)))
-                                                  (Tp (TpInt 3)),"")
               ,"form opr3[1^2+3+4]" ~: (parser form "1^2+3+4")
                                  ~?= Just (Op Plus 
                                                   (Op Plus 
