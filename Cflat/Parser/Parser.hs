@@ -1,7 +1,6 @@
 module Cflat.Parser.Parser where
 import Control.Monad
 import Data.Char
-import Cflat.Type.Type
 
 -- Parser
 data Parser a = Parser {execParser::String -> Maybe (a, String)}
@@ -63,6 +62,13 @@ token p = do
   cs <- p
   space
   return cs
+data CompilationUnit = CompilationUnit (ImportStmts, TopDefs)
+                     deriving (Eq, Ord, Show)
+data ImportStmts =  ImportStmts
+                    deriving (Eq, Ord, Show)
+data TopDefs = TopDefs
+             deriving (Eq, Ord, Show)
+
 compilationUnit :: Parser CompilationUnit
 compilationUnit = do
   imp_stmts <- importStmts
@@ -70,14 +76,5 @@ compilationUnit = do
   return $ CompilationUnit (imp_stmts, top_defs)
 importStmts ::  Parser ImportStmts
 importStmts =  undefined
-importStmt :: Parser ImportStmt
-importStmt = do
-  imp <- string "import"
-  nms <- names
-name :: Parser String
-name = do
-  head <- letter
-  
-names :: Parser Names
 topDefs :: Parser TopDefs
 topDefs = undefined
