@@ -112,11 +112,19 @@ topDef =
   +++ defunion
   +++ typedef
 defun = undefined
-defvars = do
-  strg <- storage
-  tp <- valtype
-  nm <- name
-          
+defvars = 
+  do
+    strg <- storage
+    tp <- valtype
+    valnm <- many1 varname
+    return valnm
+  +++ 
+  do  
+    tp <- valtype
+    valnm <- many1 varname
+    return valnm
+varname = undefined
+  -- nm <- name
 defconst = undefined
 defstruct = undefined
 defunion = undefined
