@@ -62,43 +62,58 @@ token p = do
   cs <- p
   space
   return cs
-data CompilationUnit = CompilationUnit (ImportStmts, TopDefs)
+data CompilationUnit = CompilationUnit ImportStmts TopDefs
                      deriving (Eq, Ord, Show)
 type ImportStmts =  [ImportStmt]
 data ImportStmt =  Import Names
                     deriving (Eq, Ord, Show)
-data Names = Name
-             | Join Name Dot Names
-                    deriving (Eq, Ord, Show)
+type Names = String
 type Name = String
 type Dot = String
-data TopDefs = TopDefs
+type TopDefs = [TopDef]
+data TopDef = TopDef
              deriving (Eq, Ord, Show)
-
 compilationUnit :: Parser CompilationUnit
 compilationUnit = do
   imp_stmts <- importStmts
   top_defs <- topDefs
-  return $ CompilationUnit (imp_stmts, top_defs)
+  return $ CompilationUnit imp_stmts top_defs
 importStmts ::  Parser ImportStmts
 importStmts =  many importStmt
 importStmt :: Parser ImportStmt
 importStmt = do
-  imp <- string "Import"
+  imp <- token $ string "Import"
   nms <- names
+  semc <- token $ string ";"
   return $ Import nms
 names :: Parser Names
-names = do
+names = do  
   nm <- name
-  do
-    dot <- string "."
+  do 
+    dot <- token $ string "."
     nms <- names
-    return Join nm dot nms
+    return $ nm ++ dot ++ nms
     +++ return nm
 name :: Parser Name
-name = do
+name = token $ do
   alf <- letter
   alfnums <- many alphanum
   return $ alf:alfnums
 topDefs :: Parser TopDefs
-topDefs = undefined
+topDefs = do
+  many1 topDef
+topDef :: Parser TopDef
+topDef = 
+  defun
+  +++ defvars
+  +++ defconst
+  +++ defstruct
+  +++ defunion
+  +++ typedef
+defun = undefined
+defvars = undefined
+defconst = undefined
+defstruct = undefined
+defunion = undefined
+typedef = undefined
+
