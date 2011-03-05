@@ -1,3 +1,4 @@
+
 module Cflat.Parser.Parser where
 import Control.Monad
 import Data.Char
@@ -67,7 +68,7 @@ data CompilationUnit = CompilationUnit ImportStmts TopDefs
 type ImportStmts =  [ImportStmt]
 data ImportStmt =  Import Names
                     deriving (Eq, Ord, Show)
-type Names = String
+type Names = [Name] 
 type Name = String
 type Dot = String
 type TopDefs = [TopDef]
@@ -92,8 +93,8 @@ names = do
   do 
     dot <- token $ string "."
     nms <- names
-    return $ nm ++ dot ++ nms
-    +++ return nm
+    return (nm:nms)
+    +++ return [nm]
 name :: Parser Name
 name = token $ do
   alf <- letter
@@ -111,7 +112,11 @@ topDef =
   +++ defunion
   +++ typedef
 defun = undefined
-defvars = undefined
+defvars = do
+  strg <- storage
+  tp <- valtype
+  nm <- name
+          
 defconst = undefined
 defstruct = undefined
 defunion = undefined
