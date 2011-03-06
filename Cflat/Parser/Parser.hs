@@ -88,14 +88,13 @@ names = do
   nms <- many $ separator "." name
   return (nm:nms)
 name :: Parser Name
-name = token $ do
-  alf <- letter
-  alfnums <- many alphanum
-  return $ alf:alfnums
+name = ident
 type TopDefs = [TopDef]
 data TopDef = TopDef
             | TopDefvars Defvars
             | TopDefun Defun
+            | TopDefstruct Defstruct
+            | TopDefunion Defunion
              deriving (Eq, Ord, Show)
 topDefs :: Parser [TopDef]
 topDefs = do
@@ -105,9 +104,9 @@ topDef =
   defun
   +++ defvars
   -- +++ defconst
-  -- +++ defstruct
-  -- +++ defunion
-  -- +++ typedef
+  +++ defstruct
+  +++ defunion
+  +++ typedef
 data Defun = Defun  Storage VarType Name Params Block
              deriving (Eq, Ord, Show)
 defun :: Parser TopDef
@@ -156,8 +155,9 @@ type Defvarlist = [Defvars]
 defvarlist = many defvar
 defvar = do
   tp <- vartype
-  valnm <- varname
-  valnms <- many (separator "," varname)
+  valnm <- defnamevalue
+  valnms <- many (separator "," defnamevalue)
+  semc <- token $ string ";"
   return (map (\(nm,  val) -> (Defvar NoStorage tp nm val)) (valnm:valnms))
 type Stmts = [Stmt]
 data Stmt = Stmt
@@ -176,8 +176,9 @@ defvars :: Parser TopDef
 defvars = do
   strg <- storage
   tp <- vartype
-  valnm <- varname
-  valnms <- many (separator "," varname)
+  valnm <- defnamevalue
+  valnms <- many (separator "," defnamevalue)
+  semc <- token $ string ";"
   return (TopDefvars  (map (\(nm,  val) -> (Defvar strg tp nm val)) (valnm:valnms)))
 separator :: String -> Parser a -> Parser a
 separator spr p = do
@@ -203,8 +204,8 @@ vartype = token $
     tp <-string "string"
     return StrType
 vartyperef = vartype
-varname :: Parser (Name,  Value)
-varname = do
+defnamevalue :: Parser (Name,  Value)
+defnamevalue = do
   nm <- name
   do
     eq <- token $ string "="
@@ -218,7 +219,38 @@ value = token $ do
    val <- many1 alphanum
    return (Value val)
 defconst = undefined
-defstruct = undefined
-defunion = undefined
+data Defstruct = Defstruct Name MemberList
+                 deriving (Eq, Ord, Show)
+defstruct = do
+  token $ string "struct"
+  nm <- name
+  memlst <- memberlist
+  semc <- token $ string ";"
+  return $ TopDefstruct (Defstruct nm memlst)
+type MemberList = [Slot]
+memberlist = many1 slot
+data Slot = Slot VarType Name
+                 deriving (Eq, Ord, Show)
+slot = do
+  tp <- vartype
+  nm <- name
+  semc <- token $ string ";"
+  return $ Slot tp nm
+data Defunion = Defunion Name MemberList
+                 deriving (Eq, Ord, Show)
+defunion = do
+  token $ string "union"
+  nm <- name
+  memlst <- memberlist
+  semc <- token $ string ";"
+  return $ TopDefunion (Defunion nm memlst)
+data Typedef = Typedef Typeref Ident
+                 deriving (Eq, Ord, Show)
+type Typeref = String
+type Ident = String
+ident :: Parser Ident
+ident = token $ do
+  alf <- letter
+  alfnums <- many alphanum
+  return $ alf:alfnums
 typedef = undefined
-
