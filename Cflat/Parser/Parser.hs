@@ -1,4 +1,3 @@
-
 module Cflat.Parser.Parser where
 import Control.Monad
 import Data.Char
@@ -72,8 +71,6 @@ type Names = [Name]
 type Name = String
 type Dot = String
 type TopDefs = [TopDef]
-data TopDef = TopDef
-             deriving (Eq, Ord, Show)
 compilationUnit :: Parser CompilationUnit
 compilationUnit = do
   imp_stmts <- importStmts
@@ -100,31 +97,74 @@ name = token $ do
   alf <- letter
   alfnums <- many alphanum
   return $ alf:alfnums
-topDefs :: Parser TopDefs
+topDefs :: Parser [TopDef]
 topDefs = do
   many1 topDef
+data TopDef = TopDef
+            | TopDefvars Defvars
+             deriving (Eq, Ord, Show)
+type Defvars = [Defvar]
+data Defvar = Defvar Storage VarType Name Value
+             deriving (Eq, Ord, Show)
+data Storage = NoStorage
+                    | Static
+               deriving (Eq, Ord, Show)
+data VarType = IntType
+             | StrType
+               deriving (Eq, Ord, Show)
+data Value = NoValue
+           | Value String
+               deriving (Eq, Ord, Show)
 topDef :: Parser TopDef
 topDef = 
   defun
   +++ defvars
-  +++ defconst
-  +++ defstruct
-  +++ defunion
-  +++ typedef
+  -- +++ defconst
+  -- +++ defstruct
+  -- +++ defunion
+  -- +++ typedef
 defun = undefined
+defvars :: Parser TopDef
 defvars = 
   do
     strg <- storage
-    tp <- valtype
-    valnm <- many1 varname
-    return valnm
+    tp <- vartype
+    valnm <- varname
+    valnms <- many (separator "," varname)
+    return (TopDefvars  (map (\(nm,  val) -> (Defvar strg tp nm val)) (valnm:valnms)))
   +++ 
   do  
-    tp <- valtype
-    valnm <- many1 varname
-    return valnm
-varname = undefined
-  -- nm <- name
+    tp <- vartype
+    valnm <- varname
+    valnms <- many (separator "," varname)
+    return (TopDefvars (map (\(nm,  val) -> (Defvar NoStorage tp nm val)) (valnm:valnms)))
+separator :: String -> Parser a -> Parser a
+separator spr p = do
+  s <- token $ string spr
+  a <- p
+  return a
+storage = do
+    strg <- token $ string "static"
+    return Static
+vartype = token $ 
+  do
+    tp <- string "int"
+    return IntType
+  +++ 
+  do 
+    tp <-string "string"
+    return StrType
+varname :: Parser (Name,  Value)
+varname = do
+  nm <- name
+  do
+    eq <- token $ string "="
+    val <- value
+    return $ (nm, val)
+    +++ return (nm, NoValue)
+value = token $ do
+   val <- many1 alphanum
+   return (Value val)
 defconst = undefined
 defstruct = undefined
 defunion = undefined
