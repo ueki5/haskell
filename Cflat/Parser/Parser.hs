@@ -107,14 +107,14 @@ topDef =
   +++ defstruct
   +++ defunion
   +++ typedef
-data Defun = Defun  Storage VarType Name Params Block
+data Defun = Defun  Storage Typeref Name Params Block
              deriving (Eq, Ord, Show)
 defun :: Parser TopDef
 defun = do
   strg <- storage
-  tp <- vartyperef
+  tp <- typeref
   nm <- name
-  prms <- parenthesis "(" params ")"
+  prms <- parentheses "(" params ")"
   blk <- block
   return (TopDefun  (Defun strg tp nm prms blk))
 data Params = Void
@@ -136,15 +136,17 @@ params =
 void = token $ do
   string "void"
   return Void
-data Param = Param VarType Name
+-- data Param = Param VarType Name
+data Param = Param Typeref Name
              deriving (Eq, Ord, Show)
 param = do
-  tp <- vartype
+  -- tp <- vartype
+  tp <- typeref
   nm <- name
   return $ Param tp nm
 data Block = Block Defvarlist Stmts
                deriving (Eq, Ord, Show)
-block = parenthesis 
+block = parentheses 
   "{" 
   (do
      lst <- defvarlist
@@ -154,7 +156,7 @@ block = parenthesis
 type Defvarlist = [Defvars]
 defvarlist = many defvar
 defvar = do
-  tp <- vartype
+  tp <- typeref
   valnm <- defnamevalue
   valnms <- many (separator "," defnamevalue)
   semc <- token $ string ";"
@@ -163,19 +165,19 @@ type Stmts = [Stmt]
 data Stmt = Stmt
                deriving (Eq, Ord, Show)
 stmts = undefined
-parenthesis :: String -> Parser a -> String -> Parser a
-parenthesis l p r = do
-  string l
+parentheses :: String -> Parser a -> String -> Parser a
+parentheses l p r = do
+  token $ string l
   elm <- p
-  string r
+  token $ string r
   return elm
 type Defvars = [Defvar]
-data Defvar = Defvar Storage VarType Name Value
+data Defvar = Defvar Storage Typeref Name Value
              deriving (Eq, Ord, Show)
 defvars :: Parser TopDef
 defvars = do
   strg <- storage
-  tp <- vartype
+  tp <- typeref
   valnm <- defnamevalue
   valnms <- many (separator "," defnamevalue)
   semc <- token $ string ";"
@@ -192,18 +194,6 @@ storage = do
     strg <- token $ string "static"
     return Static
     +++ return NoStorage
-data VarType = IntType
-             | StrType
-               deriving (Eq, Ord, Show)
-vartype = token $ 
-  do
-    tp <- string "int"
-    return IntType
-  +++ 
-  do 
-    tp <-string "string"
-    return StrType
-vartyperef = vartype
 defnamevalue :: Parser (Name,  Value)
 defnamevalue = do
   nm <- name
@@ -229,10 +219,10 @@ defstruct = do
   return $ TopDefstruct (Defstruct nm memlst)
 type MemberList = [Slot]
 memberlist = many1 slot
-data Slot = Slot VarType Name
+data Slot = Slot Typeref Name
                  deriving (Eq, Ord, Show)
 slot = do
-  tp <- vartype
+  tp <- typeref
   nm <- name
   semc <- token $ string ";"
   return $ Slot tp nm
@@ -246,7 +236,101 @@ defunion = do
   return $ TopDefunion (Defunion nm memlst)
 data Typedef = Typedef Typeref Ident
                  deriving (Eq, Ord, Show)
-type Typeref = String
+data Typeref = Typeref TyperefBase [Modifier]
+               deriving (Eq, Ord, Show)
+typeref :: Parser Typeref
+typeref = do
+  tp <- typerefbase
+  m <- many modifier
+  return $ Typeref tp m
+data Modifier = ArrayLengthNotSpecified
+              | ArrayLengthSpecified Int
+              | Pointer
+              | FunctionPointer ParamTyperefs
+                 deriving (Eq, Ord, Show)
+modifier :: Parser Modifier
+modifier = do
+  token $ string "[]"
+  return ArrayLengthNotSpecified
+  +++ do
+  idx <- parentheses "[" integer "]"
+  return (ArrayLengthSpecified idx)
+  +++ do
+  token $ string "*"
+  return Pointer
+  +++ do
+  prmtprfs <- parentheses "(" paramtyperefs ")"
+  return (FunctionPointer  prmtprfs)
+integer :: Parser Int
+integer = do
+  i <- token $ many1 digit
+  return $ read i
+data TyperefBaseCore = CHAR
+                 | SHORT
+                 | INT
+                 | LONG
+                 deriving (Eq, Ord, Show)
+typerefbasecore :: Parser TyperefBaseCore
+typerefbasecore = do
+    token $ string "char"
+    return CHAR
+  +++   do
+   token $ string "short"
+   return SHORT
+  +++   do
+    token $ string "int"
+    return INT
+  +++ do
+    token $ string "long"
+    return LONG
+data TyperefBase = VOID
+                 | UNSIGNED TyperefBaseCore
+                 | STRUCT Ident
+                 | UNION Ident
+                 -- | Ident
+                 deriving (Eq, Ord, Show)
+typerefbase :: Parser TyperefBase
+typerefbase = 
+  do
+    token $ string "void"
+    return VOID
+  +++ do
+    token $ string "unsigned"
+    tpcore <- typerefbasecore
+    return (UNSIGNED tpcore)
+  +++ do
+    token $ string "struct"
+    idnt <- ident
+    return (STRUCT idnt)
+  +++ do
+    token $ string "union"
+    idnt <- ident
+    return (UNION idnt)
+data ParamTyperefs = VoidType
+            | FixedParamTyperef [ParamTyperef]
+            | UnfixedParamTyperef [ParamTyperef]
+              deriving (Eq, Ord, Show)
+paramtyperefs = 
+    do 
+      prm <- paramtyperef
+      prms <- many (separator "," paramtyperef)
+      do
+        unfixed <- separator "," (token $ string "...")
+        return (UnfixedParamTyperef (prm:prms))
+        +++ return (FixedParamTyperef (prm:prms))
+    +++
+    do
+      v <- voidtype
+      return v
+voidtype = token $ do
+  string "void"
+  return VoidType
+data ParamTyperef = ParamTyperef Typeref
+             deriving (Eq, Ord, Show)
+paramtyperef = do
+  tp <- typeref
+  return $ ParamTyperef tp
+
 type Ident = String
 ident :: Parser Ident
 ident = token $ do
