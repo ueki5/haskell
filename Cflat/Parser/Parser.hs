@@ -162,9 +162,77 @@ defvar = do
   semc <- token $ string ";"
   return (map (\(nm,  val) -> (Defvar NoStorage tp nm val)) (valnm:valnms))
 type Stmts = [Stmt]
-data Stmt = Stmt
+data Stmt = Semicolon
+          | LabeledStmt String
+          | Expr
+          | Block2
+          | IfStmt
+          | WhileStmt
+          | DoWhileStmt
+          | ForStmt
+          | SwitchStmt
+          | BreakStmt
+          | ContinueStmt
+          | GotoStmt
+          | ReturnStmt
                deriving (Eq, Ord, Show)
-stmts = undefined
+stmts = do
+  ss <- many stmt
+  return ss
+stmt = do
+  semi <- token $ string ";"
+  return Semicolon
+  +++ do
+  lss <- labeledstmt
+  return lss
+  +++ do
+  e <- expr
+  return e
+  +++ do
+  b <- block2
+  return b
+  +++ do
+  is <- ifstmt
+  return is
+  +++ do
+  ws <- whilestmt
+  return ws
+  +++ do
+  dws <- dowhilestmt
+  return dws
+  +++ do
+  fs <- forstmt
+  return fs
+  +++ do
+  sws <- switchstmt
+  return sws
+  +++ do
+  brs <- breakstmt
+  return brs
+  +++ do
+  cns <- continuestmt
+  return cns
+  +++ do
+  gs <- gotostmt
+  return gs
+  +++ do
+  rs <- returnstmt
+  return rs
+labeledstmt = do
+  lbl <- name
+  colon <- token $ string ":"
+  return $ LabeledStmt lbl
+expr = undefined
+block2 = undefined
+ifstmt = undefined
+whilestmt = undefined
+dowhilestmt = undefined
+forstmt = undefined
+switchstmt = undefined
+breakstmt = undefined
+continuestmt = undefined
+gotostmt = undefined
+returnstmt = undefined
 parentheses :: String -> Parser a -> String -> Parser a
 parentheses l p r = do
   token $ string l
