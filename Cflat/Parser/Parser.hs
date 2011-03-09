@@ -136,11 +136,9 @@ params =
 void = token $ do
   string "void"
   return Void
--- data Param = Param VarType Name
 data Param = Param Typeref Name
              deriving (Eq, Ord, Show)
 param = do
-  -- tp <- vartype
   tp <- typeref
   nm <- name
   return $ Param tp nm
@@ -162,77 +160,107 @@ defvar = do
   semc <- token $ string ";"
   return (map (\(nm,  val) -> (Defvar NoStorage tp nm val)) (valnm:valnms))
 type Stmts = [Stmt]
-data Stmt = Semicolon
-          | LabeledStmt String
+data Stmt = BlankLine
+          | LabeledStmt Name Stmts
           | Expr
-          | Block2
-          | IfStmt
-          | WhileStmt
-          | DoWhileStmt
-          | ForStmt
-          | SwitchStmt
+          | Block2 Stmts
+          | IfStmt Expr Stmt Stmt
+          | WhileStmt Expr Stmt
+          | DoWhileStmt Expr Stmt
+          | ForStmt Expr Expr Expr Stmt
+          | SwitchStmt Stmts
           | BreakStmt
-          | ContinueStmt
+          | ContinueStmt 
           | GotoStmt
-          | ReturnStmt
+          | ReturnStmt Expr
+          | ReturnVoid
                deriving (Eq, Ord, Show)
+data Expr = ExprD
+               deriving (Eq, Ord, Show)
+stmts :: Parser Stmts
 stmts = do
   ss <- many stmt
   return ss
-stmt = do
+stmt = blankline
+  +++ labeledstmt
+  +++ exprstmt
+  +++ block2
+  +++ ifstmt
+  +++ whilestmt
+  +++ dowhilestmt
+  +++ forstmt
+  +++ switchstmt
+  +++ breakstmt
+  +++ continuestmt
+  +++ gotostmt
+  +++ returnstmt
+blankline = do
   semi <- token $ string ";"
-  return Semicolon
-  +++ do
-  lss <- labeledstmt
-  return lss
-  +++ do
-  e <- expr
-  return e
-  +++ do
-  b <- block2
-  return b
-  +++ do
-  is <- ifstmt
-  return is
-  +++ do
-  ws <- whilestmt
-  return ws
-  +++ do
-  dws <- dowhilestmt
-  return dws
-  +++ do
-  fs <- forstmt
-  return fs
-  +++ do
-  sws <- switchstmt
-  return sws
-  +++ do
-  brs <- breakstmt
-  return brs
-  +++ do
-  cns <- continuestmt
-  return cns
-  +++ do
-  gs <- gotostmt
-  return gs
-  +++ do
-  rs <- returnstmt
-  return rs
+  return BlankLine
 labeledstmt = do
-  lbl <- name
+  l <- name
   colon <- token $ string ":"
-  return $ LabeledStmt lbl
+  s <- stmts
+  return $ LabeledStmt l s
+exprstmt = do
+  e <- expr
+  token $ string ";"
+  return e
 expr = undefined
-block2 = undefined
-ifstmt = undefined
-whilestmt = undefined
-dowhilestmt = undefined
-forstmt = undefined
+block2 :: Parser Stmt
+block2 = do
+  ss <- parentheses "{" stmts "}"
+  return $ Block2 ss
+ifstmt = do
+  token $ string "if"
+  e <- parentheses "(" expr ")"
+  thenstmt <- stmt
+  do
+    token $ string "else"
+    elsestmt <- stmt
+    return $ IfStmt e thenstmt elsestmt
+    +++ return (IfStmt e thenstmt BlankLine)
+whilestmt = do
+  token $ string "while"
+  e <- parentheses "(" expr ")"
+  s <- stmt
+  return $ WhileStmt e s
+dowhilestmt = do
+  token $ string "do"
+  s <- stmt
+  token $ string "while"
+  e <- parentheses "(" expr ")"
+  return $ DoWhileStmt e s
+forstmt = do
+  token $ string "for"
+  (e1, e2, e3) <- parentheses "(" 
+          (do
+            e1 <- expr
+            token $ string ";"
+            e2 <- expr
+            token $ string ";"
+            e3 <- expr
+            token $ string ";"
+            return (e1, e2, e3))
+       ")"
+  s <- stmt
+  return $ ForStmt e1 e2 e3 s
 switchstmt = undefined
-breakstmt = undefined
-continuestmt = undefined
+breakstmt = do
+  token $ string "break"
+  token $ string ";"
+  return BreakStmt
+continuestmt = do
+  token $ string "continue"
+  token $ string ";"
+  return ContinueStmt
 gotostmt = undefined
-returnstmt = undefined
+returnstmt = do
+  token $ string "return"
+  do 
+    e <- expr
+    return $ ReturnStmt e
+    +++ return ReturnVoid
 parentheses :: String -> Parser a -> String -> Parser a
 parentheses l p r = do
   token $ string l
