@@ -19,7 +19,7 @@ item = Parser $ \inp -> case inp of
   (c:cs) -> Just (c, cs)
 -- ‚Ç‚¿‚ç‚©‚ª¬Œ÷‚µ‚½ê‡‚ÉÌ—p
 (+++) :: Parser a -> Parser a -> Parser a
-p +++ q = Parser $ \inp -> case parser p inp of
+(+++) p q = Parser $ \inp -> case parser p inp of
                       Nothing -> parser q inp
                       Just (v, out) -> Just (v, out)
 sat :: (Char -> Bool) -> Parser Char
@@ -163,27 +163,42 @@ defvar = do
 type Stmts = [Stmt]
 data Stmt = BlankLine
           | LabeledStmt Name Stmts
-          | Expr
+          | StmtExpr Expr
           | Block2 Stmts
           | IfStmt Expr Stmt Stmt
           | WhileStmt Expr Stmt
           | DoWhileStmt Expr Stmt
           | ForStmt Expr Expr Expr Stmt
-          | SwitchStmt Stmts
+          | SwitchStmt Expr CaseClauses
           | BreakStmt
           | ContinueStmt 
-          | GotoStmt
+          | GotoStmt Name
           | ReturnStmt Expr
           | ReturnVoid
                deriving (Eq, Ord, Show)
-data Expr = ExprD
-               deriving (Eq, Ord, Show)
+data Expr = ExprAssign Assign
+               | ExprOpAssign OpAssign
+               | E10 Expr10
+               | E9 Expr9
+               | E8 Expr8
+               | E7 Expr7
+               | E6 Expr6
+               | E5 Expr5
+               | E4 Expr4
+               | E3 Expr3
+               | E2 Expr2
+               | E1 Expr1
+                 deriving (Eq, Ord, Show)
+stmtbases :: Parser Stmts
+stmtbases = do
+  ss <- many stmtbase
+  return ss
 stmts :: Parser Stmts
 stmts = do
   ss <- many stmt
   return ss
-stmt = blankline
-  +++ labeledstmt
+stmtbase :: Parser Stmt
+stmtbase = blankline
   +++ exprstmt
   +++ block2
   +++ ifstmt
@@ -195,23 +210,137 @@ stmt = blankline
   +++ continuestmt
   +++ gotostmt
   +++ returnstmt
+stmt :: Parser Stmt
+stmt = labeledstmt
+  +++ stmtbase
+blankline :: Parser Stmt
 blankline = do
   semi <- token $ string ";"
   return BlankLine
+labeledstmt :: Parser Stmt
 labeledstmt = do
   l <- name
   colon <- token $ string ":"
-  s <- stmts
+  s <- stmtbases
   return $ LabeledStmt l s
+exprstmt :: Parser Stmt
 exprstmt = do
   e <- expr
   token $ string ";"
-  return e
-expr = undefined
+  return $ StmtExpr e
+expr :: Parser Expr
+expr = assign
+       +++ opassign
+       +++ do
+         e10 <- expr10
+         return (E10 e10)
+data Assign = Equal Term Expr
+              deriving (Eq, Ord, Show)
+assign :: Parser Expr
+assign = do
+  t <- term
+  token $ string "="
+  e <- expr
+  return (ExprAssign (Equal t e))
+data OpAssignOp = PlusEqual
+                | MinusEqual
+                | MultEqual
+                | DivEqual
+                | PercentEqual
+                | AmpersandEqual
+                | VirticalbarEqual
+                | CircumflexEqual
+                | LeftShiftEqual
+                | RightShiftEqual
+              deriving (Eq, Ord, Show)
+opassignop :: Parser OpAssignOp
+opassignop = do
+  token $ string "+="
+  return PlusEqual
+  +++ do
+  token $ string "-="
+  return MinusEqual
+  +++ do
+  token $ string "*="
+  return MultEqual
+  +++ do
+  token $ string "/="
+  return DivEqual
+  +++ do
+  token $ string "%="
+  return PercentEqual
+  +++ do
+  token $ string "&="
+  return AmpersandEqual
+  +++ do
+  token $ string "|="
+  return VirticalbarEqual
+  +++ do
+  token $ string "^="
+  return CircumflexEqual
+  +++ do
+  token $ string "<<="
+  return LeftShiftEqual
+  +++ do
+  token $ string ">>="
+  return RightShiftEqual
+data OpAssign = OpAssign Term OpAssignOp Expr
+              deriving (Eq, Ord, Show)
+opassign :: Parser Expr
+opassign = do
+  t <- term
+  o <- opassignop
+  e <- expr
+  return (ExprOpAssign (OpAssign t o e))
+data Term = Term
+              deriving (Eq, Ord, Show)
+term :: Parser Term
+term = undefined
+data Expr10 = Expr10Single Expr9
+            | Expr10Comp Expr9 Expr Expr10
+              deriving (Eq, Ord, Show)
+expr10 :: Parser Expr10
+expr10 = do
+  e9 <- expr9
+  do
+    token $ string "?"
+    e <- expr
+    token $ string ":"
+    e10 <- expr10
+    return (Expr10Comp e9 e e10)
+    +++ return (Expr10Single e9)
+data Expr9 = Expr9
+             deriving (Eq, Ord, Show)
+expr9 = undefined
+data Expr8 = Expr8
+             deriving (Eq, Ord, Show)
+expr8 = undefined
+data Expr7 = Expr7
+             deriving (Eq, Ord, Show)
+expr7 = undefined
+data Expr6 = Expr6
+             deriving (Eq, Ord, Show)
+expr6 = undefined
+data Expr5 = Expr5
+             deriving (Eq, Ord, Show)
+expr5 = undefined
+data Expr4 = Expr4
+             deriving (Eq, Ord, Show)
+expr4 = undefined
+data Expr3 = Expr3
+             deriving (Eq, Ord, Show)
+expr3 = undefined
+data Expr2 = Expr2
+             deriving (Eq, Ord, Show)
+expr2 = undefined
+data Expr1 = Expr1
+             deriving (Eq, Ord, Show)
+expr1 = undefined
 block2 :: Parser Stmt
 block2 = do
   ss <- parentheses "{" stmts "}"
   return $ Block2 ss
+ifstmt :: Parser Stmt
 ifstmt = do
   token $ string "if"
   e <- parentheses "(" expr ")"
@@ -221,17 +350,20 @@ ifstmt = do
     elsestmt <- stmt
     return $ IfStmt e thenstmt elsestmt
     +++ return (IfStmt e thenstmt BlankLine)
+whilestmt :: Parser Stmt
 whilestmt = do
   token $ string "while"
   e <- parentheses "(" expr ")"
   s <- stmt
   return $ WhileStmt e s
+dowhilestmt :: Parser Stmt
 dowhilestmt = do
   token $ string "do"
   s <- stmt
   token $ string "while"
   e <- parentheses "(" expr ")"
   return $ DoWhileStmt e s
+forstmt :: Parser Stmt
 forstmt = do
   token $ string "for"
   (e1, e2, e3) <- parentheses "(" 
@@ -246,16 +378,57 @@ forstmt = do
        ")"
   s <- stmt
   return $ ForStmt e1 e2 e3 s
-switchstmt = undefined
+switchstmt :: Parser Stmt
+switchstmt = do
+  token $ string "switch"
+  e <- parentheses "(" expr ")"
+  cs <- parentheses "{" 
+        (do
+          cs' <- many caseclause
+          do
+            d <- defaultclause
+            return (cs' ++ [d])
+            +++ return cs') 
+         "}"
+  return (SwitchStmt e cs)
+data Constant = Constant TyperefBaseCore
+                deriving (Eq, Ord, Show)
+constant :: Parser Constant
+constant = undefined
+type CaseClauses = [CaseClause]
+data CaseClause = CaseClause Constant Stmts
+                         | DefaultClause Stmts
+                deriving (Eq, Ord, Show)
+caseclause :: Parser CaseClause
+caseclause = do
+  token $ string "case"
+  c <- constant
+  token $ string ":"
+  s <- stmtbases
+  return $ CaseClause c s
+defaultclause :: Parser CaseClause
+defaultclause = do
+  token $ string "default"
+  token $ string ":"
+  s <- stmtbases
+  return $ DefaultClause s
+breakstmt :: Parser Stmt
 breakstmt = do
   token $ string "break"
   token $ string ";"
   return BreakStmt
+continuestmt :: Parser Stmt
 continuestmt = do
   token $ string "continue"
   token $ string ";"
   return ContinueStmt
-gotostmt = undefined
+gotostmt :: Parser Stmt
+gotostmt = do
+  token $ string "goto"
+  nm <- name
+  token $ string ";"
+  return $ GotoStmt nm
+returnstmt :: Parser Stmt
 returnstmt = do
   token $ string "return"
   do 
@@ -287,6 +460,7 @@ separator spr p = do
 data Storage = NoStorage
                     | Static
                deriving (Eq, Ord, Show)
+storage :: Parser Storage
 storage = do
     strg <- token $ string "static"
     return Static
@@ -302,12 +476,15 @@ defnamevalue = do
 data Value = NoValue
            | Value String
                deriving (Eq, Ord, Show)
+value :: Parser Value
 value = token $ do
    val <- many1 alphanum
    return (Value val)
+defconst :: a
 defconst = undefined
 data Defstruct = Defstruct Name MemberList
                  deriving (Eq, Ord, Show)
+defstruct :: Parser TopDef
 defstruct = do
   token $ string "struct"
   nm <- name
@@ -315,9 +492,11 @@ defstruct = do
   semc <- token $ string ";"
   return $ TopDefstruct (Defstruct nm memlst)
 type MemberList = [Slot]
+memberlist :: Parser MemberList
 memberlist = many1 slot
 data Slot = Slot Typeref Name
                  deriving (Eq, Ord, Show)
+slot :: Parser Slot
 slot = do
   tp <- typeref
   nm <- name
@@ -325,6 +504,7 @@ slot = do
   return $ Slot tp nm
 data Defunion = Defunion Name MemberList
                  deriving (Eq, Ord, Show)
+defunion :: Parser TopDef
 defunion = do
   token $ string "union"
   nm <- name
@@ -407,6 +587,7 @@ data ParamTyperefs = VoidType
             | FixedParamTyperef [ParamTyperef]
             | UnfixedParamTyperef [ParamTyperef]
               deriving (Eq, Ord, Show)
+paramtyperefs :: Parser ParamTyperefs
 paramtyperefs = 
     do 
       prm <- paramtyperef
@@ -419,21 +600,23 @@ paramtyperefs =
     do
       v <- voidtype
       return v
+voidtype :: Parser ParamTyperefs
 voidtype = token $ do
   string "void"
   return VoidType
 data ParamTyperef = ParamTyperef Typeref
              deriving (Eq, Ord, Show)
+paramtyperef :: Parser ParamTyperef
 paramtyperef = do
   tp <- typeref
   return $ ParamTyperef tp
-
 type Ident = String
 ident :: Parser Ident
 ident = token $ do
   alf <- letter
   alfnums <- many alphanum
   return $ alf:alfnums
+typedef :: Parser TopDef
 typedef = do
   t <- typeref
   i <- ident
