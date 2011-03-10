@@ -95,6 +95,7 @@ data TopDef = TopDef
             | TopDefun Defun
             | TopDefstruct Defstruct
             | TopDefunion Defunion
+            | TopDeftype Typedef
              deriving (Eq, Ord, Show)
 topDefs :: Parser [TopDef]
 topDefs = do
@@ -433,4 +434,7 @@ ident = token $ do
   alf <- letter
   alfnums <- many alphanum
   return $ alf:alfnums
-typedef = undefined
+typedef = do
+  t <- typeref
+  i <- ident
+  return $ TopDeftype (Typedef t i)
