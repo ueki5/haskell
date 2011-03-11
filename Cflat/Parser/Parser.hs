@@ -234,24 +234,98 @@ expr = assign
        +++ do
          e10 <- expr10
          return (E10 e10)
-data Assign = Equal Term Expr
+data Assign = AssignExpr Term Expr
               deriving (Eq, Ord, Show)
 assign :: Parser Expr
 assign = do
   t <- term
   token $ string "="
   e <- expr
-  return (ExprAssign (Equal t e))
+  return (ExprAssign (AssignExpr t e))
+data Operator = Pararell
+        | DoubleAmpasand
+        | GreaterThan
+        | LessThan
+        | GreaterOrEqual
+        | LessOrEqual
+        | Equal
+        | NotEqual
+        | Virticalbar
+        | Circumflex
+        | Ampersand
+        | ShiftLeft
+        | ShiftRight
+        | Plus
+        | Minus
+        | Mult
+        | Div
+        | Mod
+          deriving (Eq, Ord, Show)
+operator :: Parser Operator
+operator = do
+  token $ string "||"
+  return Pararell
+  +++ do
+  token $ string "&&"
+  return DoubleAmpasand
+  +++ do
+  token $ string ">"
+  return GreaterThan
+  +++ do
+  token $ string "<"
+  return LessThan
+  +++ do
+  token $ string ">="
+  return GreaterOrEqual
+  +++ do
+  token $ string "<="
+  return LessOrEqual
+  +++ do
+  token $ string "=="
+  return Equal
+  +++ do
+  token $ string "!="
+  return NotEqual
+  +++ do
+  token $ string "|"
+  return Virticalbar
+  +++ do
+  token $ string "^"
+  return Circumflex
+  +++ do
+  token $ string "&"
+  return Ampersand
+  +++ do
+  token $ string "<<"
+  return ShiftLeft
+  +++ do
+  token $ string ">>"
+  return ShiftRight
+  +++ do
+  token $ string "+"
+  return Plus
+  +++ do
+  token $ string "*"
+  return Minus
+  +++ do
+  token $ string "*"
+  return Mult
+  +++ do
+  token $ string "/"
+  return Div
+  +++ do
+  token $ string "%"
+  return Mod
 data OpAssignOp = PlusEqual
                 | MinusEqual
                 | MultEqual
                 | DivEqual
-                | PercentEqual
+                | ModEqual
                 | AmpersandEqual
                 | VirticalbarEqual
                 | CircumflexEqual
-                | LeftShiftEqual
-                | RightShiftEqual
+                | ShiftLeftEqual
+                | ShiftRightEqual
               deriving (Eq, Ord, Show)
 opassignop :: Parser OpAssignOp
 opassignop = do
@@ -268,7 +342,7 @@ opassignop = do
   return DivEqual
   +++ do
   token $ string "%="
-  return PercentEqual
+  return ModEqual
   +++ do
   token $ string "&="
   return AmpersandEqual
@@ -280,10 +354,10 @@ opassignop = do
   return CircumflexEqual
   +++ do
   token $ string "<<="
-  return LeftShiftEqual
+  return ShiftLeftEqual
   +++ do
   token $ string ">>="
-  return RightShiftEqual
+  return ShiftRightEqual
 data OpAssign = OpAssign Term OpAssignOp Expr
               deriving (Eq, Ord, Show)
 opassign :: Parser Expr
@@ -299,6 +373,7 @@ term = undefined
 data Expr10 = Expr10Single Expr9
             | Expr10Comp Expr9 Expr Expr10
               deriving (Eq, Ord, Show)
+-- éOçÄââéZéq expr ? expr : expr10
 expr10 :: Parser Expr10
 expr10 = do
   e9 <- expr9
@@ -309,30 +384,47 @@ expr10 = do
     e10 <- expr10
     return (Expr10Comp e9 e e10)
     +++ return (Expr10Single e9)
+-- ìÒçÄââéZéq ||
 data Expr9 = Expr9
              deriving (Eq, Ord, Show)
-expr9 = undefined
+expr9 = do
+  el <- expr8
+  do
+   er <- many expr9'
+  where 
+    expr9' = do
+          o <- operator
+          e <- expr8
+          return 
+-- ìÒçÄââéZéq &&
 data Expr8 = Expr8
              deriving (Eq, Ord, Show)
+-- ìÒçÄââéZéq >,<,>=,<=,==,!=
 expr8 = undefined
 data Expr7 = Expr7
              deriving (Eq, Ord, Show)
+-- ìÒçÄââéZéq |
 expr7 = undefined
 data Expr6 = Expr6
              deriving (Eq, Ord, Show)
 expr6 = undefined
+-- ìÒçÄââéZéq ^
 data Expr5 = Expr5
              deriving (Eq, Ord, Show)
 expr5 = undefined
+-- ìÒçÄââéZéq &
 data Expr4 = Expr4
              deriving (Eq, Ord, Show)
 expr4 = undefined
+-- ìÒçÄââéZéq >>,<<
 data Expr3 = Expr3
              deriving (Eq, Ord, Show)
 expr3 = undefined
+-- ìÒçÄââéZéq +,-
 data Expr2 = Expr2
              deriving (Eq, Ord, Show)
 expr2 = undefined
+-- ìÒçÄââéZéq *,/,%
 data Expr1 = Expr1
              deriving (Eq, Ord, Show)
 expr1 = undefined
