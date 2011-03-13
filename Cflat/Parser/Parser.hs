@@ -402,10 +402,124 @@ opassign = do
   o <- opassignop
   e <- expr
   return (ExprOpAssign (OpAssign t o e))
-data Term = Term
+data Term = TermCast Typeref Term
+          | TermUnary Unary
               deriving (Eq, Ord, Show)
 term :: Parser Term
-term = undefined
+term = do
+  tp <- parentheses "(" typeref ")"
+  tm <- term
+  return $ TermCast tp tm
+  +++ (unary >>= \u -> return $ TermUnary u)
+data Unary = PrefixPlus Unary
+           | PrefixMinus Unary
+           | UnaryPlus Term
+           | UnaryMinus Term
+           | LogicalNegation Term
+           | BitInversion Term
+           | Dereference Term
+           | AddressOperator Term
+           | Sizeoftype Typeref
+           | Sizeofunary Unary
+           | UnaryPostfix Postfix
+              deriving (Eq, Ord, Show)
+unary :: Parser Unary
+unary = 
+   do
+     token $ string "++"
+     u <- unary
+     return $ PrefixPlus u
+   +++ do
+     token $ string "--"
+     u <- unary
+     return $ PrefixMinus u
+   +++ do
+     token $ string "+"
+     t <- term
+     return $ UnaryPlus t
+   +++ do
+     token $ string "-"
+     t <- term
+     return $ UnaryMinus t
+   +++ do
+     token $ string "!"
+     t <- term
+     return $ LogicalNegation t
+   +++ do
+     token $ string "~"
+     t <- term
+     return $ BitInversion t
+   +++ do
+     token $ string "*"
+     t <- term
+     return $ Dereference t
+   +++ do
+     token $ string "&"
+     t <- term
+     return $ AddressOperator t
+   +++ do
+     token $ string "sizeof"
+     tp <- typeref
+     return $ Sizeoftype tp
+   +++ do
+     token $ string "sizeof"
+     u <- unary
+     return $ Sizeofunary u
+   +++ do
+     p <- postfix
+     return $ UnaryPostfix  p
+data Postfix = PostfixPrimary Primary
+             | PostfixComb Primary [Postfix']
+             deriving (Eq, Ord, Show)
+data Postfix' = PostfixPlus
+              | PostfixMinus
+              | RefArray Expr
+              | RefMember Name
+              | RefByPointer Name
+              | FuncCall Args
+             deriving (Eq, Ord, Show)
+postfix :: Parser Postfix
+postfix = do
+  p <- primary
+  do
+     ps <- many postfix'
+     return (PostfixComb p ps)
+     +++ return (PostfixPrimary p)
+postfix' = 
+    do
+      token $ string "++"
+      return PostfixPlus
+    +++ do
+      token $ string "--"
+      return PostfixMinus
+    +++ do
+      e <- parentheses "[" expr "]"
+      return (RefArray e)
+    +++ do
+      token $ string "."
+      nm <- name
+      return (RefMember nm)
+    +++ do
+      token $ string "->"
+      nm <- name
+      return (RefByPointer nm)
+    +++ do
+      a <- parentheses "(" args ")"
+      return (FuncCall a)
+data Args = ArgsExpr [Expr]
+            deriving (Eq, Ord, Show)
+args :: Parser Args
+args = do
+  es <- many expr
+  return $ ArgsExpr es
+data Primary = INTEGER
+             | CHARACTOR
+             | STRING
+             | IDENTIFIER
+             | PrimaryExpr Expr
+             deriving (Eq, Ord, Show)
+primary :: Parser Primary
+primary = undefined
 data Expr10 = Expr10Single Expr9
             | Expr10Comp Expr9 Expr Expr10
               deriving (Eq, Ord, Show)
