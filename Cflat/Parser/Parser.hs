@@ -242,33 +242,27 @@ assign = do
   token $ string "="
   e <- expr
   return (ExprAssign (AssignExpr t e))
-data Operator = Pararell
-        | DoubleAmpasand
-        | GreaterThan
+data Operator9 = Pararell
+                  deriving (Eq, Ord, Show)
+operator9 :: Parser Operator9
+operator9 = do
+  token $ string "||"
+  return Pararell
+data Operator8 = DoubleAmpasand
+                 deriving (Eq, Ord, Show)
+operator8 :: Parser Operator8
+operator8 = do
+  token $ string "&&"
+  return DoubleAmpasand
+data Operator7 = GreaterThan
         | LessThan
         | GreaterOrEqual
         | LessOrEqual
         | Equal
         | NotEqual
-        | Virticalbar
-        | Circumflex
-        | Ampersand
-        | ShiftLeft
-        | ShiftRight
-        | Plus
-        | Minus
-        | Mult
-        | Div
-        | Mod
           deriving (Eq, Ord, Show)
-operator :: Parser Operator
-operator = do
-  token $ string "||"
-  return Pararell
-  +++ do
-  token $ string "&&"
-  return DoubleAmpasand
-  +++ do
+operator7 :: Parser Operator7
+operator7 = do
   token $ string ">"
   return GreaterThan
   +++ do
@@ -286,28 +280,50 @@ operator = do
   +++ do
   token $ string "!="
   return NotEqual
-  +++ do
+data Operator6 = Virticalbar
+                 deriving (Eq, Ord, Show)
+operator6 :: Parser Operator6
+operator6 = do
   token $ string "|"
   return Virticalbar
-  +++ do
+data Operator5 = Circumflex
+                 deriving (Eq, Ord, Show)
+operator5 :: Parser Operator5
+operator5 = do
   token $ string "^"
   return Circumflex
-  +++ do
+data Operator4 = Ampersand
+                 deriving (Eq, Ord, Show)
+operator4 :: Parser Operator4
+operator4 = do
   token $ string "&"
   return Ampersand
-  +++ do
+data Operator3 = ShiftLeft
+               | ShiftRight
+                 deriving (Eq, Ord, Show)
+operator3 :: Parser Operator3
+operator3 = do
   token $ string "<<"
   return ShiftLeft
   +++ do
   token $ string ">>"
   return ShiftRight
-  +++ do
+data Operator2 = Plus
+        | Minus
+          deriving (Eq, Ord, Show)
+operator2 :: Parser Operator2
+operator2 = do
   token $ string "+"
   return Plus
   +++ do
-  token $ string "*"
+  token $ string "-"
   return Minus
-  +++ do
+data Operator1 = Mult
+               | Div
+               | Mod
+                 deriving (Eq, Ord, Show)
+operator1 :: Parser Operator1
+operator1 = do
   token $ string "*"
   return Mult
   +++ do
@@ -316,6 +332,26 @@ operator = do
   +++ do
   token $ string "%"
   return Mod
+data Operator = Operator9 Operator9
+              | Operator8 Operator8
+              | Operator7 Operator7
+              | Operator6 Operator6
+              | Operator5 Operator5
+              | Operator4 Operator4
+              | Operator3 Operator3
+              | Operator2 Operator2
+              | Operator1 Operator1
+          deriving (Eq, Ord, Show)
+operator :: Parser Operator
+operator = operator9 >>= \o9 -> return (Operator9 o9)
+           +++ (operator8 >>= \o8 -> return (Operator8 o8))
+           +++ (operator7 >>= \o7 -> return (Operator7 o7))
+           +++ (operator6 >>= \o6 -> return (Operator6 o6))
+           +++ (operator5 >>= \o5 -> return (Operator5 o5))
+           +++ (operator4 >>= \o4 -> return (Operator4 o4))
+           +++ (operator3 >>= \o3 -> return (Operator3 o3))
+           +++ (operator2 >>= \o2 -> return (Operator2 o2))
+           +++ (operator1 >>= \o1 -> return (Operator1 o1))
 data OpAssignOp = PlusEqual
                 | MinusEqual
                 | MultEqual
@@ -385,49 +421,158 @@ expr10 = do
     return (Expr10Comp e9 e e10)
     +++ return (Expr10Single e9)
 -- ìÒçÄââéZéq ||
-data Expr9 = Expr9
+data Expr9 = Expr9Single Expr8
+           | Expr9Comp Expr8 [Expr9Pair]
+             deriving (Eq, Ord, Show)
+data Expr9Pair = Expr9Pair Operator9 Expr8
              deriving (Eq, Ord, Show)
 expr9 = do
-  el <- expr8
+  e <- expr8
   do
-   er <- many expr9'
+    es <- many1 expr9'
+    return (Expr9Comp e es)
+    +++ return (Expr9Single e)
   where 
     expr9' = do
-          o <- operator
+          o <- operator9
           e <- expr8
-          return 
+          return  $ Expr9Pair o e
 -- ìÒçÄââéZéq &&
-data Expr8 = Expr8
+data Expr8 = Expr8Single Expr7
+           | Expr8Comp Expr7 [Expr8Pair]
              deriving (Eq, Ord, Show)
+data Expr8Pair = Expr8Pair Operator8 Expr7
+             deriving (Eq, Ord, Show)
+expr8 = do
+  e <- expr7
+  do
+    es <- many1 expr8'
+    return (Expr8Comp e es)
+    +++ return (Expr8Single e)
+  where 
+    expr8' = do
+          o <- operator8
+          e <- expr7
+          return  $ Expr8Pair o e
 -- ìÒçÄââéZéq >,<,>=,<=,==,!=
-expr8 = undefined
-data Expr7 = Expr7
+data Expr7 = Expr7Single Expr6
+           | Expr7Comp Expr6 [Expr7Pair]
              deriving (Eq, Ord, Show)
+data Expr7Pair = Expr7Pair Operator7 Expr6
+             deriving (Eq, Ord, Show)
+expr7 = do
+  e <- expr6
+  do
+    es <- many1 expr7'
+    return (Expr7Comp e es)
+    +++ return (Expr7Single e)
+  where 
+    expr7' = do
+          o <- operator7
+          e <- expr6
+          return  $ Expr7Pair o e
 -- ìÒçÄââéZéq |
-expr7 = undefined
-data Expr6 = Expr6
+data Expr6 = Expr6Single Expr5
+           | Expr6Comp Expr5 [Expr6Pair]
              deriving (Eq, Ord, Show)
-expr6 = undefined
+data Expr6Pair = Expr6Pair Operator6 Expr5
+             deriving (Eq, Ord, Show)
+expr6 = do
+  e <- expr5
+  do
+    es <- many1 expr6'
+    return (Expr6Comp e es)
+    +++ return (Expr6Single e)
+  where 
+    expr6' = do
+          o <- operator6
+          e <- expr5
+          return  $ Expr6Pair o e
 -- ìÒçÄââéZéq ^
-data Expr5 = Expr5
+data Expr5 = Expr5Single Expr4
+           | Expr5Comp Expr4 [Expr5Pair]
              deriving (Eq, Ord, Show)
-expr5 = undefined
+data Expr5Pair = Expr5Pair Operator5 Expr4
+             deriving (Eq, Ord, Show)
+expr5 = do
+  e <- expr4
+  do
+    es <- many1 expr5'
+    return (Expr5Comp e es)
+    +++ return (Expr5Single e)
+  where 
+    expr5' = do
+          o <- operator5
+          e <- expr4
+          return  $ Expr5Pair o e
 -- ìÒçÄââéZéq &
-data Expr4 = Expr4
+data Expr4 = Expr4Single Expr3
+           | Expr4Comp Expr3 [Expr4Pair]
              deriving (Eq, Ord, Show)
-expr4 = undefined
+data Expr4Pair = Expr4Pair Operator4 Expr3
+             deriving (Eq, Ord, Show)
+expr4 = do
+  e <- expr3
+  do
+    es <- many1 expr4'
+    return (Expr4Comp e es)
+    +++ return (Expr4Single e)
+  where 
+    expr4' = do
+          o <- operator4
+          e <- expr3
+          return  $ Expr4Pair o e
 -- ìÒçÄââéZéq >>,<<
-data Expr3 = Expr3
+data Expr3 = Expr3Single Expr2
+           | Expr3Comp Expr2 [Expr3Pair]
              deriving (Eq, Ord, Show)
-expr3 = undefined
+data Expr3Pair = Expr3Pair Operator3 Expr2
+             deriving (Eq, Ord, Show)
+expr3 = do
+  e <- expr2
+  do
+    es <- many1 expr3'
+    return (Expr3Comp e es)
+    +++ return (Expr3Single e)
+  where 
+    expr3' = do
+          o <- operator3
+          e <- expr2
+          return  $ Expr3Pair o e
 -- ìÒçÄââéZéq +,-
-data Expr2 = Expr2
+data Expr2 = Expr2Single Expr1
+           | Expr2Comp Expr1 [Expr2Pair]
              deriving (Eq, Ord, Show)
-expr2 = undefined
+data Expr2Pair = Expr2Pair Operator2 Expr1
+             deriving (Eq, Ord, Show)
+expr2 = do
+  e <- expr1
+  do
+    es <- many1 expr2'
+    return (Expr2Comp e es)
+    +++ return (Expr2Single e)
+  where 
+    expr2' = do
+          o <- operator2
+          e <- expr1
+          return  $ Expr2Pair o e
 -- ìÒçÄââéZéq *,/,%
-data Expr1 = Expr1
+data Expr1 = Expr1Single Term
+           | Expr1Comp Term [Expr1Pair]
              deriving (Eq, Ord, Show)
-expr1 = undefined
+data Expr1Pair = Expr1Pair Operator1 Term
+             deriving (Eq, Ord, Show)
+expr1 = do
+  t <- term
+  do
+    es <- many1 expr1'
+    return (Expr1Comp t es)
+    +++ return (Expr1Single t)
+  where 
+    expr1' = do
+          o <- operator1
+          t <- term
+          return  $ Expr1Pair o t
 block2 :: Parser Stmt
 block2 = do
   ss <- parentheses "{" stmts "}"
