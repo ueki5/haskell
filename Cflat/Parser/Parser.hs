@@ -93,6 +93,7 @@ type TopDefs = [TopDef]
 data TopDef = TopDef
             | TopDefvars Defvars
             | TopDefun Defun
+            | TopDefconst Defconst
             | TopDefstruct Defstruct
             | TopDefunion Defunion
             | TopDeftype Typedef
@@ -104,7 +105,7 @@ topDef :: Parser TopDef
 topDef = 
   defun
   +++ defvars
-  -- +++ defconst
+  +++ defconst
   +++ defstruct
   +++ defunion
   +++ typedef
@@ -158,7 +159,7 @@ defvar = do
   tp <- typeref
   valnm <- defnamevalue
   valnms <- many (separator "," defnamevalue)
-  semc <- token $ string ";"
+  token $ string ";"
   return (map (\(nm,  val) -> (Defvar NoStorage tp nm val)) (valnm:valnms))
 type Stmts = [Stmt]
 data Stmt = BlankLine
@@ -512,14 +513,32 @@ args :: Parser Args
 args = do
   es <- many expr
   return $ ArgsExpr es
-data Primary = INTEGER
-             | CHARACTOR
-             | STRING
-             | IDENTIFIER
+data Primary = INTEGER String
+             | CHARACTOR Char
+             | STRING String
+             | IDENTIFIER Name
              | PrimaryExpr Expr
              deriving (Eq, Ord, Show)
 primary :: Parser Primary
-primary = undefined
+primary = integer'
+          +++ charactor
+          +++ string'
+          +++ identifier
+          +++ do
+            e <- expr
+            return $ PrimaryExpr e
+integer' = do
+  i <-  token $ many1 digit
+  return $ INTEGER i
+charactor = do
+  c <-  token letter
+  return $ CHARACTOR c
+string' = do
+  s <-  token $ many1 letter
+  return $ STRING s
+identifier = do
+  nm <-  token $ name
+  return $ IDENTIFIER nm
 data Expr10 = Expr10Single Expr9
             | Expr10Comp Expr9 Expr Expr10
               deriving (Eq, Ord, Show)
@@ -742,10 +761,12 @@ switchstmt = do
             +++ return cs') 
          "}"
   return (SwitchStmt e cs)
-data Constant = Constant TyperefBaseCore
+data Constant = Constant Primary
                 deriving (Eq, Ord, Show)
 constant :: Parser Constant
-constant = undefined
+constant = do
+  p <- primary
+  return $ Constant p
 type CaseClauses = [CaseClause]
 data CaseClause = CaseClause Constant Stmts
                          | DefaultClause Stmts
@@ -831,8 +852,17 @@ value :: Parser Value
 value = token $ do
    val <- many1 alphanum
    return (Value val)
-defconst :: a
-defconst = undefined
+data Defconst = Defconst Typeref Name Expr
+                deriving (Eq, Ord, Show)
+defconst :: Parser TopDef
+defconst = do
+  token $ string "const"
+  t <- typeref
+  nm <- name
+  token $ string "="
+  e <- expr
+  token $ string ";"
+  return (TopDefconst (Defconst t nm e))
 data Defstruct = Defstruct Name MemberList
                  deriving (Eq, Ord, Show)
 defstruct :: Parser TopDef
@@ -851,7 +881,7 @@ slot :: Parser Slot
 slot = do
   tp <- typeref
   nm <- name
-  semc <- token $ string ";"
+  token $ string ";"
   return $ Slot tp nm
 data Defunion = Defunion Name MemberList
                  deriving (Eq, Ord, Show)
