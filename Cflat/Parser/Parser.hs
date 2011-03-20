@@ -10,7 +10,24 @@ instance Monad Parser where
                                 Nothing -> Nothing
                                 Just (v, out) -> parser (f v) out
 parser :: Parser a -> String -> Maybe (a, String)
-parser = execParser
+parser p s = case (commentoff CommentOff s) of
+                  Nothing -> Nothing
+                  Just s' -> execParser p s'
+data CommentStatus = CommentOff
+                     | LineOn
+                     | RegionOn
+commentoff :: CommentStatus -> String -> Maybe String
+commentoff CommentOff ('-':('-':cs)) = commentoff LineOn cs
+commentoff CommentOff ('/':('*':cs)) = commentoff RegionOn cs
+commentoff LineOn ('\n':cs) = commentoff CommentOff cs
+commentoff LineOn ('\r':('\n':cs)) = commentoff CommentOff cs
+commentoff RegionOn ('*':('/':cs)) = commentoff CommentOff cs
+commentoff LineOn (c:cs) = commentoff LineOn cs
+commentoff RegionOn (c:cs) = commentoff RegionOn cs
+commentoff CommentOff s = Just s
+commentoff RegionOn []  = Nothing
+commentoff _ [] = Just []
+
 failure :: Parser a
 failure = Parser $ \inp -> Nothing
 item :: Parser Char
