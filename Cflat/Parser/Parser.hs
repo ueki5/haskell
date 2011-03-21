@@ -3,7 +3,10 @@ import Control.Monad
 import Data.Char
 
 -- Parser
-data Parser a = Parser {execParser::String -> Maybe (a, String)}
+data CommentStatus = CommentOff
+                     | LineOn
+                     | RegionOn
+data Parser a = Parser {execParser::String -> Maybe (a,  String)}
 instance Monad Parser where
   return v = Parser $ \inp -> Just (v, inp)
   p >>= f = Parser $ \inp -> case parser p inp of
@@ -13,9 +16,6 @@ parser :: Parser a -> String -> Maybe (a, String)
 parser p s = case (commentoff CommentOff s) of
                   Nothing -> Nothing
                   Just s' -> execParser p s'
-data CommentStatus = CommentOff
-                     | LineOn
-                     | RegionOn
 commentoff :: CommentStatus -> String -> Maybe String
 commentoff CommentOff ('-':('-':cs)) = commentoff LineOn cs
 commentoff CommentOff ('/':('*':cs)) = commentoff RegionOn cs
