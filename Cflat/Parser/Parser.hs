@@ -1,17 +1,19 @@
 module Cflat.Parser.Parser where
 import System.IO
 import Control.Monad
+import Control.Exception (bracket)
 import Data.Char
 
 --parsefile
 parsefile :: FilePath -> IO AST
-parsefile path = do
-  inh <- openFile path ReadMode
-  s <- mainLoop inh
-  hClose inh
-  case (parser compilationUnit s) of
-    Just (ast, []) -> return ast
-    _ -> return $ AST [] []
+parsefile path = bracket 
+                 (openFile path ReadMode) 
+                 hClose 
+                 $ \h -> do
+                   s <-mainLoop h
+                   case (parser compilationUnit s) of
+                     Just (ast, []) -> return ast
+                     _ -> return $ AST [] []
 mainLoop :: Handle -> IO String
 mainLoop inh = do
   ineof <- hIsEOF inh
