@@ -48,8 +48,9 @@ testIO = "createEmptyFile" ~:
                  txt @=? "this is temp file")))
            (doesFileExist file >>= \ret -> return . not $ ret) @? "Post-condition test: file is not removed.")
        where file = "sample.txt"
-test_imp = "import" ~: test [ 
-               "importStmt" ~: (parser importStmt "Import aaa.bbb")  ~?= Join "aaa" "." "bbb"
-              -- ,"int 1" ~: (parser int "1")  ~?= Just (TpInt 1,"")
-              -- ,"null test1" ~: null [] ~=? True
-           ]
+-- test_imp = "import" ~: test [ 
+--                "importStmt" ~: (parser importStmt "Import aaa.bbb")  ~?= Join "aaa" "." "bbb"
+--               ,"int 1" ~: (parser int "1")  ~?= Just (TpInt 1,"")
+--               ,"null test1" ~: null [] ~=? True
+--            ]
+source = "\nimport stdio;\nimport stdio;\n"

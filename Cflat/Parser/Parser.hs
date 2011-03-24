@@ -1,7 +1,26 @@
 module Cflat.Parser.Parser where
+import System.IO
 import Control.Monad
 import Data.Char
 
+--parsefile
+parsefile :: FilePath -> IO AST
+parsefile path = do
+  inh <- openFile path ReadMode
+  s <- mainLoop inh
+  hClose inh
+  case (parser compilationUnit s) of
+    Just (ast, []) -> return ast
+    _ -> return $ AST [] []
+mainLoop :: Handle -> IO String
+mainLoop inh = do
+  ineof <- hIsEOF inh
+  if ineof
+     then return []
+     else do     
+       c <- hGetChar inh
+       cs <- mainLoop inh
+       return  (c:cs)
 -- Parser
 data Parser a = Parser {execParser::String -> Maybe (a, String)}
 instance Monad Parser where
@@ -79,13 +98,13 @@ token p = do
   cs <- p
   space
   return cs
-data CompilationUnit = CompilationUnit ImportStmts TopDefs
+data AST = AST ImportStmts TopDefs
                      deriving (Eq, Ord, Show)
-compilationUnit :: Parser CompilationUnit
+compilationUnit :: Parser AST
 compilationUnit = do
   imp_stmts <- importStmts
   top_defs <- topDefs
-  return $ CompilationUnit imp_stmts top_defs
+  return $ AST imp_stmts top_defs
 type ImportStmts =  [ImportStmt]
 data ImportStmt =  Import Names
                     deriving (Eq, Ord, Show)
@@ -93,7 +112,7 @@ importStmts ::  Parser ImportStmts
 importStmts =  many importStmt
 importStmt :: Parser ImportStmt
 importStmt = do
-  imp <- token $ string "Import"
+  imp <- token $ string "import"
   nms <- names
   semc <- token $ string ";"
   return $ Import nms
@@ -116,8 +135,7 @@ data TopDef = TopDef
             | TopDeftype Typedef
              deriving (Eq, Ord, Show)
 topDefs :: Parser [TopDef]
-topDefs = do
-  many1 topDef
+topDefs = many topDef
 topDef :: Parser TopDef
 topDef = 
   defun
