@@ -542,8 +542,8 @@ primary = integer'
           +++ string'
           +++ identifier
           +++ do
-            e <- expr
-            return $ PrimaryExpr e
+            e <- parentheses "("  expr ")"
+            return (PrimaryExpr e)
 integer' = do
   i <-  token $ many1 digit
   return $ INTEGER i
