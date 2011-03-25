@@ -1,8 +1,51 @@
 import stdio;
 import stdlib;
 
-int
-main(int argc, char **argv)
+int x, y = 5;
+long[] ary;
+struct mystrct{
+       int a;
+       long b;
+};
+union myunion{
+       int a;
+       long b;
+};
+int sub(int a)
+{
+	int i, j = 5;
+	j = i + 1;
+	i++;
+	if (i)
+	{
+		j = i - 1;
+	}
+	while (i)
+	{
+		j = i - 1;
+	}
+	do
+	{
+		j = i - 1;
+	}while(i);
+	switch(i)
+	{
+		case 1:
+			j = i - 1;
+		case 2:
+			j = i - 1;
+			break;
+		default:
+			j = i - 1;
+			break;
+	}
+	if (i) {
+	   return (j * 1 -j);
+	} else {
+	   return (j * 1 -j);
+	}
+}
+int main(int argc, char **argv)
 {
 	int i, j = 5;
 
@@ -10,6 +53,6 @@ main(int argc, char **argv)
 	   return (j * 1 -j);
 	}
 	else {
-	     exit(1);
+	     return (1);
 	}
 }

@@ -4,16 +4,18 @@ import Control.Monad
 import Control.Exception (bracket)
 import Data.Char
 
---parsefile
-parsefile :: FilePath -> IO AST
-parsefile path = bracket 
+--parseFile
+parseFile :: FilePath -> IO (Maybe AST)
+parseFile = parseFile' compilationUnit
+parseFile' :: Parser a -> FilePath -> IO (Maybe a)
+parseFile' p path = bracket 
                  (openFile path ReadMode) 
                  hClose 
-                 $ \h -> do
-                   s <-mainLoop h
-                   case (parser compilationUnit s) of
-                     Just (ast, []) -> return ast
-                     _ -> return $ AST [] []
+                 $ \inh -> do
+                   s <-mainLoop inh
+                   case (parser p s) of
+                     Just (a, []) -> return (Just a)
+                     _              -> return Nothing
 mainLoop :: Handle -> IO String
 mainLoop inh = do
   ineof <- hIsEOF inh
@@ -769,6 +771,7 @@ dowhilestmt = do
   s <- stmt
   token $ string "while"
   e <- parentheses "(" expr ")"
+  token $ string ";"
   return $ DoWhileStmt e s
 forstmt :: Parser Stmt
 forstmt = do
@@ -906,7 +909,7 @@ defstruct :: Parser TopDef
 defstruct = do
   token $ string "struct"
   nm <- name
-  memlst <- memberlist
+  memlst <- parentheses "{" memberlist "}"
   semc <- token $ string ";"
   return $ TopDefstruct (Defstruct nm memlst)
 type MemberList = [Slot]
@@ -926,7 +929,7 @@ defunion :: Parser TopDef
 defunion = do
   token $ string "union"
   nm <- name
-  memlst <- memberlist
+  memlst <- parentheses "{" memberlist "}"
   semc <- token $ string ";"
   return $ TopDefunion (Defunion nm memlst)
 data Typedef = Typedef Typeref Ident
@@ -982,6 +985,7 @@ data TyperefBase = VOID
                  | UNSIGNED TyperefBaseCore
                  | STRUCT Ident
                  | UNION Ident
+                 | SIGNED TyperefBaseCore
                  -- | Ident
                  deriving (Eq, Ord, Show)
 typerefbase :: Parser TyperefBase
@@ -1001,6 +1005,9 @@ typerefbase =
     token $ string "union"
     idnt <- ident
     return (UNION idnt)
+  +++ do
+    tp <- typerefbasecore
+    return (SIGNED tp)
 data ParamTyperefs = VoidType
             | FixedParamTyperef [ParamTyperef]
             | UnfixedParamTyperef [ParamTyperef]
