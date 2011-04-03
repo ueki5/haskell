@@ -75,6 +75,8 @@ upper :: Parser Char
 upper = sat isUpper
 letter :: Parser Char
 letter = sat isAlpha
+ascii :: Parser Char
+ascii = sat isAscii
 alphanum :: Parser Char
 alphanum = sat isAlphaNum
 space :: Parser ()
@@ -570,10 +572,10 @@ integer' = do
   i <-  token $ many1 digit
   return $ INTEGER i
 charactor = do
-  c <-  token letter
+  c <-  parentheses "'" (token ascii) "'"
   return $ CHARACTOR c
 string' = do
-  s <-  token $ many1 letter
+  s <-  parentheses "\"" (token $ many ascii) "\""
   return $ STRING s
 identifier = do
   nm <-  token $ name

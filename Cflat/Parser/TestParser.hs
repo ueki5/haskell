@@ -9,9 +9,13 @@ import System.Environment
 
 main = do
     getProgName >>= print
+    runTestTT test_parser
     -- runTestTT test_int
     -- runTestTT testIO
 
+test_parser = "test parser" ~: test [ 
+               "int 0" ~: (parser int "0")  ~?= Just (TpInt 0,"")
+           ]
 -- test_int = "test int" ~: test [ 
 --                "int 0" ~: (parser int "0")  ~?= Just (TpInt 0,"")
 --               ,"int 1" ~: (parser int "1")  ~?= Just (TpInt 1,"")
