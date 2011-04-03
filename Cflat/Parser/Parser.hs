@@ -22,7 +22,7 @@ mainLoop inh = do
   if ineof
      then return []
      else do     
-       c <- hGetChar inh
+       c <- hGetChar inh 
        cs <- mainLoop inh
        return  (c:cs)
 -- Parser
