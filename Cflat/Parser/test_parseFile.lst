@@ -1,4 +1,5 @@
 parseFile "../test/add.cb" -- 関数argsに問題あり。変数定義と同じになっている。
+				       -- string'が失敗するのは、asciiが\"まで食ってしまうから。
 parseFile "../test/addressof.cb"
 parseFile "../test/alloca.cb"
 parseFile "../test/alloca2.cb"

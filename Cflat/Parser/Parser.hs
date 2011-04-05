@@ -452,7 +452,9 @@ term = do
   tp <- parentheses "(" typeref ")"
   tm <- term
   return $ TermCast tp tm
-  +++ (unary >>= \u -> return $ TermUnary u)
+  +++ do
+    u <- unary
+    return $ TermUnary u
 data Unary = PrefixPlus Unary
            | PrefixMinus Unary
            | UnaryPlus Term
@@ -552,17 +554,19 @@ data Args = ArgsExpr [Expr]
             deriving (Eq, Ord, Show)
 args :: Parser Args
 args = do
-  es <- many expr
-  return $ ArgsExpr es
+  e <- expr
+  es <- many (separator "," expr)
+  return $ ArgsExpr (e:es)
+  +++ return (ArgsExpr [])
 data Primary = INTEGER String
-             | CHARACTOR Char
+             | CHARACTER Char
              | STRING String
              | IDENTIFIER Name
              | PrimaryExpr Expr
              deriving (Eq, Ord, Show)
 primary :: Parser Primary
 primary = integer'
-          +++ charactor
+          +++ character
           +++ string'
           +++ identifier
           +++ do
@@ -571,11 +575,11 @@ primary = integer'
 integer' = do
   i <-  token $ many1 digit
   return $ INTEGER i
-charactor = do
-  c <-  parentheses "'" (token ascii) "'"
-  return $ CHARACTOR c
+character = do
+  c <-  parentheses "'" ascii "'"
+  return $ CHARACTER c
 string' = do
-  s <-  parentheses "\"" (token $ many ascii) "\""
+  s <-  parentheses "\"" (many ascii) "\""
   return $ STRING s
 identifier = do
   nm <-  token $ name
