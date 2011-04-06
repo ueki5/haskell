@@ -10,7 +10,6 @@ main(int argc, char **argv)
     int j = 0;
 
     printf("%d", 1 + 0);
-/*
     printf(";%d", 2 + j);
     i = 2;
     j = 1;
@@ -27,7 +26,6 @@ main(int argc, char **argv)
     j = 1;
     printf(";%d", f(i) + j);
     puts("");
-*/
     return 0;
 }
 

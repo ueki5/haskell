@@ -1,8 +1,9 @@
 parseFile "../test/add.cb" -- 関数argsに問題あり。変数定義と同じになっている。
 				       -- string'が失敗するのは、asciiが\"まで食ってしまうから。
-parseFile "../test/addressof.cb"
-parseFile "../test/alloca.cb"
-parseFile "../test/alloca2.cb"
+				       →string''作ってescape処理を実装(\)→OK
+parseFile "../test/addressof.cb" →OK
+parseFile "../test/alloca.cb"→変数宣言＆初期化がだめ。 char* p = alloca(32);
+parseFile "../test/alloca2.cb"→NG
 parseFile "../test/aref-semcheck.cb"
 parseFile "../test/aref-semcheck2.cb"
 parseFile "../test/array-semcheck1.cb"
