@@ -40,14 +40,16 @@ data CommentStatus = CommentOff
                      | LineOn
                      | RegionOn
 commentoff :: CommentStatus -> String -> Maybe String
-commentoff CommentOff ('-':('-':cs)) = commentoff LineOn cs
+commentoff CommentOff ('/':('/':cs)) = commentoff LineOn cs
 commentoff CommentOff ('/':('*':cs)) = commentoff RegionOn cs
 commentoff LineOn ('\n':cs) = commentoff CommentOff cs
 commentoff LineOn ('\r':('\n':cs)) = commentoff CommentOff cs
 commentoff RegionOn ('*':('/':cs)) = commentoff CommentOff cs
 commentoff LineOn (c:cs) = commentoff LineOn cs
 commentoff RegionOn (c:cs) = commentoff RegionOn cs
-commentoff CommentOff s = Just s
+commentoff CommentOff (c:cs) = do
+                               cs' <- commentoff CommentOff cs
+                               Just (c:cs')
 commentoff RegionOn []  = Nothing
 commentoff _ [] = Just []
 
@@ -77,6 +79,8 @@ letter :: Parser Char
 letter = sat isAlpha
 ascii :: Parser Char
 ascii = sat isAscii
+str :: Parser Char
+str = sat (\x -> (isAscii x) && (x /= '\"'))
 alphanum :: Parser Char
 alphanum = sat isAlphaNum
 space :: Parser ()
@@ -578,9 +582,30 @@ integer' = do
 character = do
   c <-  parentheses "'" ascii "'"
   return $ CHARACTER c
+-- string' = do
+--   s <-  parentheses "\"" (many str) "\""
+--   return $ STRING s
+data StringStatus = Normal
+                          | InString
 string' = do
-  s <-  parentheses "\"" (many ascii) "\""
-  return $ STRING s
+  cs <- string'' Normal
+  return $ STRING cs
+string'' Normal = do
+  dmy <-  char '\"'
+  cs <- string'' InString
+  return cs
+string'' InString = do
+  c <-  char '\\'
+  n <- ascii
+  cs <- string'' InString
+  return (c:(n:cs))
+  +++ do
+  c <- str
+  cs <- string'' InString
+  return (c:cs)
+  +++ do
+  c <- char '\"'
+  return [c]
 identifier = do
   nm <-  token $ name
   return $ IDENTIFIER nm
