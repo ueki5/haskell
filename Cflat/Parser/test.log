@@ -1,0 +1,49 @@
+### Failure in: parse from file:2:alloca
+parse できませんでした
+### Failure in: parse from file:3:alloca2
+parse できませんでした
+### Failure in: parse from file:8:array2
+parse できませんでした
+### Failure in: parse from file:9:assign
+parse できませんでした
+### Failure in: parse from file:15:block
+parse できませんでした
+### Failure in: parse from file:17:cast
+parse できませんでした
+### Failure in: parse from file:18:cast2
+parse できませんでした
+### Failure in: parse from file:20:charops2
+parse できませんでした
+### Failure in: parse from file:21:comm
+parse できませんでした
+### Failure in: parse from file:23:const
+parse できませんでした
+### Failure in: parse from file:33:defun-semcheck6
+parse できませんでした
+### Failure in: parse from file:34:defun-semcheck7
+parse できませんでした
+### Failure in: parse from file:41:deref-semcheck5
+parse できませんでした
+### Failure in: parse from file:49:empstruct
+parse できませんでした
+### Failure in: parse from file:50:eq
+parse できませんでした
+### Failure in: parse from file:51:for-break
+parse できませんでした
+### Failure in: parse from file:52:for-continue
+parse できませんでした
+### Failure in: parse from file:53:for1
+parse できませんでした
+### Failure in: parse from file:65:gteq
+parse できませんでした
+### Failure in: parse from file:66:gvar
+parse できませんでした
+### Failure in: parse from file:73:implicitaddr
+parse できませんでした
+### Failure in: parse from file:75:initializer
+parse できませんでした
+### Failure in: parse from file:76:integer
+parse できませんでした
+### Failure in: parse from file:86:lteq
+parse できませんでした
+Cases: 174  Tried: 89  Errors: 0  Failures: 24
