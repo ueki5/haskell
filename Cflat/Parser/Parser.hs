@@ -16,6 +16,13 @@ parseFile' p path = bracket
                    case (parser p s) of
                      Just (a, []) -> return (Just a)
                      _              -> return Nothing
+applyFile :: (String -> a) -> FilePath -> IO a
+applyFile f path = bracket 
+                 (openFile path ReadMode) 
+                 hClose 
+                 $ \inh -> do
+                   s <-mainLoop inh
+                   return (f s)
 mainLoop :: Handle -> IO String
 mainLoop inh = do
   ineof <- hIsEOF inh
