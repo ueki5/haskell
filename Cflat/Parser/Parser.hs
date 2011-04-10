@@ -1,7 +1,30 @@
 module Cflat.Parser.Parser where
+import System.IO
 import Control.Monad
+import Control.Exception (bracket)
 import Data.Char
 
+--parseFile
+parseFile :: FilePath -> IO (Maybe AST)
+parseFile = parseFile' compilationUnit
+parseFile' :: Parser a -> FilePath -> IO (Maybe a)
+parseFile' p path = bracket 
+                 (openFile path ReadMode) 
+                 hClose 
+                 $ \inh -> do
+                   s <-mainLoop inh
+                   case (parser p s) of
+                     Just (a, []) -> return (Just a)
+                     _              -> return Nothing
+mainLoop :: Handle -> IO String
+mainLoop inh = do
+  ineof <- hIsEOF inh
+  if ineof
+     then return []
+     else do     
+       c <- hGetChar inh 
+       cs <- mainLoop inh
+       return  (c:cs)
 -- Parser
 data CommentStatus = CommentOff
                      | LineOn
@@ -17,14 +40,16 @@ parser p s = case (commentoff CommentOff s) of
                   Nothing -> Nothing
                   Just s' -> execParser p s'
 commentoff :: CommentStatus -> String -> Maybe String
-commentoff CommentOff ('-':('-':cs)) = commentoff LineOn cs
+commentoff CommentOff ('/':('/':cs)) = commentoff LineOn cs
 commentoff CommentOff ('/':('*':cs)) = commentoff RegionOn cs
 commentoff LineOn ('\n':cs) = commentoff CommentOff cs
 commentoff LineOn ('\r':('\n':cs)) = commentoff CommentOff cs
 commentoff RegionOn ('*':('/':cs)) = commentoff CommentOff cs
 commentoff LineOn (c:cs) = commentoff LineOn cs
 commentoff RegionOn (c:cs) = commentoff RegionOn cs
-commentoff CommentOff s = Just s
+commentoff CommentOff (c:cs) = do
+                               cs' <- commentoff CommentOff cs
+                               Just (c:cs')
 commentoff RegionOn []  = Nothing
 commentoff _ [] = Just []
 
@@ -52,6 +77,10 @@ upper :: Parser Char
 upper = sat isUpper
 letter :: Parser Char
 letter = sat isAlpha
+ascii :: Parser Char
+ascii = sat isAscii
+str :: Parser Char
+str = sat (\x -> (isAscii x) && (x /= '\"'))
 alphanum :: Parser Char
 alphanum = sat isAlphaNum
 space :: Parser ()
@@ -79,13 +108,13 @@ token p = do
   cs <- p
   space
   return cs
-data CompilationUnit = CompilationUnit ImportStmts TopDefs
+data AST = AST ImportStmts TopDefs
                      deriving (Eq, Ord, Show)
-compilationUnit :: Parser CompilationUnit
+compilationUnit :: Parser AST
 compilationUnit = do
   imp_stmts <- importStmts
   top_defs <- topDefs
-  return $ CompilationUnit imp_stmts top_defs
+  return $ AST imp_stmts top_defs
 type ImportStmts =  [ImportStmt]
 data ImportStmt =  Import Names
                     deriving (Eq, Ord, Show)
@@ -93,7 +122,7 @@ importStmts ::  Parser ImportStmts
 importStmts =  many importStmt
 importStmt :: Parser ImportStmt
 importStmt = do
-  imp <- token $ string "Import"
+  imp <- token $ string "import"
   nms <- names
   semc <- token $ string ";"
   return $ Import nms
@@ -116,8 +145,7 @@ data TopDef = TopDef
             | TopDeftype Typedef
              deriving (Eq, Ord, Show)
 topDefs :: Parser [TopDef]
-topDefs = do
-  many1 topDef
+topDefs = many topDef
 topDef :: Parser TopDef
 topDef = 
   defun
@@ -428,7 +456,9 @@ term = do
   tp <- parentheses "(" typeref ")"
   tm <- term
   return $ TermCast tp tm
-  +++ (unary >>= \u -> return $ TermUnary u)
+  +++ do
+    u <- unary
+    return $ TermUnary u
 data Unary = PrefixPlus Unary
            | PrefixMinus Unary
            | UnaryPlus Term
@@ -528,31 +558,54 @@ data Args = ArgsExpr [Expr]
             deriving (Eq, Ord, Show)
 args :: Parser Args
 args = do
-  es <- many expr
-  return $ ArgsExpr es
+  e <- expr
+  es <- many (separator "," expr)
+  return $ ArgsExpr (e:es)
+  +++ return (ArgsExpr [])
 data Primary = INTEGER String
-             | CHARACTOR Char
+             | CHARACTER Char
              | STRING String
              | IDENTIFIER Name
              | PrimaryExpr Expr
              deriving (Eq, Ord, Show)
 primary :: Parser Primary
 primary = integer'
-          +++ charactor
+          +++ character
           +++ string'
           +++ identifier
           +++ do
-            e <- expr
-            return $ PrimaryExpr e
+            e <- parentheses "("  expr ")"
+            return (PrimaryExpr e)
 integer' = do
   i <-  token $ many1 digit
   return $ INTEGER i
-charactor = do
-  c <-  token letter
-  return $ CHARACTOR c
+character = do
+  c <-  parentheses "'" ascii "'"
+  return $ CHARACTER c
+-- string' = do
+--   s <-  parentheses "\"" (many str) "\""
+--   return $ STRING s
+data StringStatus = Normal
+                          | InString
 string' = do
-  s <-  token $ many1 letter
-  return $ STRING s
+  cs <- string'' Normal
+  return $ STRING cs
+string'' Normal = do
+  dmy <-  char '\"'
+  cs <- string'' InString
+  return cs
+string'' InString = do
+  c <-  char '\\'
+  n <- ascii
+  cs <- string'' InString
+  return (c:(n:cs))
+  +++ do
+  c <- str
+  cs <- string'' InString
+  return (c:cs)
+  +++ do
+  c <- char '\"'
+  return [c]
 identifier = do
   nm <-  token $ name
   return $ IDENTIFIER nm
@@ -749,6 +802,7 @@ dowhilestmt = do
   s <- stmt
   token $ string "while"
   e <- parentheses "(" expr ")"
+  token $ string ";"
   return $ DoWhileStmt e s
 forstmt :: Parser Stmt
 forstmt = do
@@ -886,7 +940,7 @@ defstruct :: Parser TopDef
 defstruct = do
   token $ string "struct"
   nm <- name
-  memlst <- memberlist
+  memlst <- parentheses "{" memberlist "}"
   semc <- token $ string ";"
   return $ TopDefstruct (Defstruct nm memlst)
 type MemberList = [Slot]
@@ -906,7 +960,7 @@ defunion :: Parser TopDef
 defunion = do
   token $ string "union"
   nm <- name
-  memlst <- memberlist
+  memlst <- parentheses "{" memberlist "}"
   semc <- token $ string ";"
   return $ TopDefunion (Defunion nm memlst)
 data Typedef = Typedef Typeref Ident
@@ -962,6 +1016,7 @@ data TyperefBase = VOID
                  | UNSIGNED TyperefBaseCore
                  | STRUCT Ident
                  | UNION Ident
+                 | SIGNED TyperefBaseCore
                  -- | Ident
                  deriving (Eq, Ord, Show)
 typerefbase :: Parser TyperefBase
@@ -981,6 +1036,9 @@ typerefbase =
     token $ string "union"
     idnt <- ident
     return (UNION idnt)
+  +++ do
+    tp <- typerefbasecore
+    return (SIGNED tp)
 data ParamTyperefs = VoidType
             | FixedParamTyperef [ParamTyperef]
             | UnfixedParamTyperef [ParamTyperef]
