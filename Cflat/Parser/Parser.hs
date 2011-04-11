@@ -8,14 +8,19 @@ import Data.Char
 parseFile :: FilePath -> IO (Maybe AST)
 parseFile = parseFile' compilationUnit
 parseFile' :: Parser a -> FilePath -> IO (Maybe a)
-parseFile' p path = bracket 
+parseFile' p path = applyFile func path
+    where func s = case (parser p s) of
+                     Just (ans, []) -> Just ans
+                     _              -> Nothing
+applyFile :: (String -> Maybe a) -> FilePath -> IO (Maybe a)
+applyFile f path = bracket 
                  (openFile path ReadMode) 
                  hClose 
                  $ \inh -> do
                    s <-mainLoop inh
-                   case (parser p s) of
-                     Just (a, []) -> return (Just a)
-                     _              -> return Nothing
+                   case commentoff CommentOff s of
+                     Just s' -> return (f s')
+                     _       -> return Nothing
 mainLoop :: Handle -> IO String
 mainLoop inh = do
   ineof <- hIsEOF inh
@@ -26,9 +31,6 @@ mainLoop inh = do
        cs <- mainLoop inh
        return  (c:cs)
 -- Parser
-data CommentStatus = CommentOff
-                     | LineOn
-                     | RegionOn
 data Parser a = Parser {execParser::String -> Maybe (a,  String)}
 instance Monad Parser where
   return v = Parser $ \inp -> Just (v, inp)
@@ -36,9 +38,13 @@ instance Monad Parser where
                                 Nothing -> Nothing
                                 Just (v, out) -> parser (f v) out
 parser :: Parser a -> String -> Maybe (a, String)
-parser p s = case (commentoff CommentOff s) of
-                  Nothing -> Nothing
-                  Just s' -> execParser p s'
+parser = execParser
+-- parser p s = case (commentoff CommentOff s) of
+--                   Nothing -> Nothing
+--                   Just s' -> execParser p s'
+data CommentStatus = CommentOff
+                     | LineOn
+                     | RegionOn
 commentoff :: CommentStatus -> String -> Maybe String
 commentoff CommentOff ('/':('/':cs)) = commentoff LineOn cs
 commentoff CommentOff ('/':('*':cs)) = commentoff RegionOn cs
@@ -76,13 +82,13 @@ lower = sat isLower
 upper :: Parser Char
 upper = sat isUpper
 letter :: Parser Char
-letter = sat isAlpha
+letter = sat (\x -> (isAlpha x) || (x == '_'))
 ascii :: Parser Char
 ascii = sat isAscii
 str :: Parser Char
 str = sat (\x -> (isAscii x) && (x /= '\"'))
 alphanum :: Parser Char
-alphanum = sat isAlphaNum
+alphanum = sat (\x -> (isAlphaNum x) || (x == '_'))
 space :: Parser ()
 space = do
   many (sat isSpace)
@@ -149,7 +155,7 @@ topDefs = many topDef
 topDef :: Parser TopDef
 topDef = 
   defun
-  +++ defvars
+  +++ topdefvar
   +++ defconst
   +++ defstruct
   +++ defunion
@@ -192,25 +198,24 @@ param = do
 data Block = Block Defvarlist Stmts
                deriving (Eq, Ord, Show)
 block = parentheses 
-  "{" 
-  (do
-     lst <- defvarlist
-     ss <- stmts
-     return $ Block lst ss)
-  "}"
+        "{" (do
+              lst <- defvarlist
+              ss <- stmts
+              return $ Block lst ss) "}"
 type Defvarlist = [Defvars]
 defvarlist = many defvar
 defvar = do
+  strg <- storage
   tp <- typeref
   valnm <- defnamevalue
   valnms <- many (separator "," defnamevalue)
   token $ string ";"
-  return (map (\(nm,  val) -> (Defvar NoStorage tp nm val)) (valnm:valnms))
+  return (map (\(nm,  val) -> (Defvar strg tp nm val)) (valnm:valnms))
 type Stmts = [Stmt]
 data Stmt = BlankLine
           | LabeledStmt Name Stmts
           | StmtExpr Expr
-          | Block2 Stmts
+          | StmtBlock Block
           | IfStmt Expr Stmt Stmt
           | WhileStmt Expr Stmt
           | DoWhileStmt Expr Stmt
@@ -246,7 +251,7 @@ stmts = do
 stmtbase :: Parser Stmt
 stmtbase = blankline
   +++ exprstmt
-  +++ block2
+  +++ stmtblock
   +++ ifstmt
   +++ whilestmt
   +++ dowhilestmt
@@ -576,7 +581,18 @@ primary = integer'
           +++ do
             e <- parentheses "("  expr ")"
             return (PrimaryExpr e)
-integer' = do
+integer' = octal
+           +++ hexadecimal
+           +++ decimal
+octal = do
+  o <- token $ string "0o"
+  i <-  token $ many1 digit
+  return $ INTEGER (o ++ i)
+hexadecimal = do
+  h <- token $ string "0x"
+  i <-  token $ many1 digit
+  return $ INTEGER (h ++ i)
+decimal = do
   i <-  token $ many1 digit
   return $ INTEGER i
 character = do
@@ -776,10 +792,10 @@ expr1 = do
           o <- operator1
           t <- term
           return  $ Expr1Pair o t
-block2 :: Parser Stmt
-block2 = do
-  ss <- parentheses "{" stmts "}"
-  return $ Block2 ss
+stmtblock :: Parser Stmt
+stmtblock = do
+  blk <- block
+  return $ StmtBlock blk
 ifstmt :: Parser Stmt
 ifstmt = do
   token $ string "if"
@@ -887,14 +903,10 @@ parentheses l p r = do
 type Defvars = [Defvar]
 data Defvar = Defvar Storage Typeref Name Value
              deriving (Eq, Ord, Show)
-defvars :: Parser TopDef
-defvars = do
-  strg <- storage
-  tp <- typeref
-  valnm <- defnamevalue
-  valnms <- many (separator "," defnamevalue)
-  semc <- token $ string ";"
-  return (TopDefvars  (map (\(nm,  val) -> (Defvar strg tp nm val)) (valnm:valnms)))
+topdefvar :: Parser TopDef
+topdefvar = do
+  var <- defvar
+  return $ TopDefvars var
 separator :: String -> Parser a -> Parser a
 separator spr p = do
   s <- token $ string spr
@@ -917,21 +929,24 @@ defnamevalue = do
     return (nm, val)
     +++ return (nm, NoValue)
 data Value = NoValue
-           | Value String
+           | ValueOf Expr
                deriving (Eq, Ord, Show)
 value :: Parser Value
-value = token $ do
-   val <- many1 alphanum
-   return (Value val)
+value = do
+    e <- expr
+    return $ ValueOf e
+-- value = token $ do
+--    val <- many1 alphanum
+--    return (Value val)
 data Defconst = Defconst Typeref Name Expr
                 deriving (Eq, Ord, Show)
 defconst :: Parser TopDef
 defconst = do
   token $ string "const"
-  t <- typeref
+  t  <- typeref
   nm <- name
   token $ string "="
-  e <- expr
+  e  <- expr
   token $ string ";"
   return (TopDefconst (Defconst t nm e))
 data Defstruct = Defstruct Name MemberList
@@ -941,7 +956,7 @@ defstruct = do
   token $ string "struct"
   nm <- name
   memlst <- parentheses "{" memberlist "}"
-  semc <- token $ string ";"
+  token $ string ";"
   return $ TopDefstruct (Defstruct nm memlst)
 type MemberList = [Slot]
 memberlist :: Parser MemberList
@@ -961,7 +976,7 @@ defunion = do
   token $ string "union"
   nm <- name
   memlst <- parentheses "{" memberlist "}"
-  semc <- token $ string ";"
+  token $ string ";"
   return $ TopDefunion (Defunion nm memlst)
 data Typedef = Typedef Typeref Ident
                  deriving (Eq, Ord, Show)
@@ -1069,11 +1084,13 @@ paramtyperef = do
 type Ident = String
 ident :: Parser Ident
 ident = token $ do
-  alf <- letter
-  alfnums <- many alphanum
-  return $ alf:alfnums
+  alpha <- letter
+  alphanums <- many alphanum
+  return $ alpha:alphanums
 typedef :: Parser TopDef
 typedef = do
+  token $ string "typedef"
   t <- typeref
   i <- ident
+  token $ string ";"
   return $ TopDeftype (Typedef t i)
