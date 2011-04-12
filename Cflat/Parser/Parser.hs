@@ -70,6 +70,14 @@ item = Parser $ \inp -> case inp of
 (+++) p q = Parser $ \inp -> case parser p inp of
                       Nothing -> parser q inp
                       Just (v, out) -> Just (v, out)
+-- ‘o•û‚ª¬Œ÷‚µA‚©‚ÂÁ”ï‚µ‚½•¶Žš—ñ‚ª“¯‚¶‚¾‚Á‚½ê‡‚ÉÌ—p
+(&&&) :: Parser a -> Parser a -> Parser a
+p &&& q = Parser $ \inp -> case parser p inp of
+                      Nothing -> Nothing
+                      Just (v, out) -> case parser q inp of
+                        Nothing -> Nothing
+                        Just (v', out') -> if out == out' then Just (v', out')
+                                                      else Nothing
 sat :: (Char -> Bool) -> Parser Char
 sat p = do 
   x <- item
@@ -86,7 +94,7 @@ letter = sat (\x -> (isAlpha x) || (x == '_'))
 ascii :: Parser Char
 ascii = sat isAscii
 str :: Parser Char
-str = sat (\x -> (isAscii x) && (x /= '\"'))
+str = sat (/= '\"')
 alphanum :: Parser Char
 alphanum = sat (\x -> (isAlphaNum x) || (x == '_'))
 space :: Parser ()
@@ -1033,16 +1041,16 @@ data TyperefBaseCore = CHAR
                  deriving (Eq, Ord, Show)
 typerefbasecore :: Parser TyperefBaseCore
 typerefbasecore = do
-    token $ string "char"
+    (token $ string "char") &&& ident
     return CHAR
   +++   do
-   token $ string "short"
-   return SHORT
+    (token $ string "short") &&& ident
+    return SHORT
   +++   do
-    token $ string "int"
+    (token $ string "int") &&& ident
     return INT
   +++ do
-    token $ string "long"
+    (token $ string "long") &&& ident
     return LONG
 data TyperefBase = VOID
                  | UNSIGNED TyperefBaseCore
@@ -1054,18 +1062,18 @@ data TyperefBase = VOID
 typerefbase :: Parser TyperefBase
 typerefbase = 
   do
-    token $ string "void"
+    (token $ string "void") &&& ident
     return VOID
   +++ do
-    token $ string "unsigned"
+    (token $ string "unsigned") &&& ident
     tpcore <- typerefbasecore
     return (UNSIGNED tpcore)
   +++ do
-    token $ string "struct"
+    (token $ string "struct") &&& ident
     idnt <- ident
     return (STRUCT idnt)
   +++ do
-    token $ string "union"
+    (token $ string "union") &&& ident
     idnt <- ident
     return (UNION idnt)
   +++ do
