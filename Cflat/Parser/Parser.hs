@@ -314,23 +314,23 @@ data Operator7 = GreaterThan
           deriving (Eq, Ord, Show)
 operator7 :: Parser Operator7
 operator7 = do
-  token $ string ">"
-  return GreaterThan
-  +++ do
-  token $ string "<"
-  return LessThan
-  +++ do
-  token $ string ">="
-  return GreaterOrEqual
-  +++ do
-  token $ string "<="
-  return LessOrEqual
-  +++ do
   token $ string "=="
   return Equal
   +++ do
   token $ string "!="
   return NotEqual
+  +++ do
+  token $ string ">="
+  return GreaterOrEqual
+  +++ do
+  token $ string ">"
+  return GreaterThan
+  +++ do
+  token $ string "<="
+  return LessOrEqual
+  +++ do
+  token $ string "<"
+  return LessThan
 data Operator6 = Virticalbar
                  deriving (Eq, Ord, Show)
 operator6 :: Parser Operator6
@@ -512,7 +512,7 @@ unary =
      return $ AddressOperator t
    +++ do
      token $ string "sizeof"
-     tp <- typeref
+     tp <- parentheses "(" typeref ")"
      return $ Sizeoftype tp
    +++ do
      token $ string "sizeof"
@@ -567,7 +567,10 @@ args = do
   es <- many (separator "," expr)
   return $ ArgsExpr (e:es)
   +++ return (ArgsExpr [])
-data Primary = INTEGER String
+data Primary = DECIMAL String
+             | UNSIGNEDDECIMAL String
+             | LONGDECIMAL String
+             | UNSIGNEDLONGDECIMAL String
              | CHARACTER Char
              | STRING String
              | IDENTIFIER Name
@@ -583,18 +586,33 @@ primary = integer'
             return (PrimaryExpr e)
 integer' = octal
            +++ hexadecimal
+           +++ unsignedLongDecimal
+           +++ longDecimal
+           +++ unsignedDecimal
            +++ decimal
 octal = do
   o <- token $ string "0o"
   i <-  token $ many1 digit
-  return $ INTEGER (o ++ i)
+  return $ DECIMAL (o ++ i)
 hexadecimal = do
   h <- token $ string "0x"
   i <-  token $ many1 digit
-  return $ INTEGER (h ++ i)
+  return $ DECIMAL (h ++ i)
+unsignedLongDecimal = do
+  i <-  token $ many1 digit
+  token $ string "UL"
+  return $ UNSIGNEDLONGDECIMAL i
+longDecimal = do
+  i <-  token $ many1 digit
+  token $ string "L"
+  return $ LONGDECIMAL i
+unsignedDecimal = do
+  i <-  token $ many1 digit
+  token $ string "U"
+  return $ UNSIGNEDDECIMAL i
 decimal = do
   i <-  token $ many1 digit
-  return $ INTEGER i
+  return $ DECIMAL i
 character = do
   c <-  parentheses "'" ascii "'"
   return $ CHARACTER c
@@ -830,7 +848,6 @@ forstmt = do
             e2 <- expr
             token $ string ";"
             e3 <- expr
-            token $ string ";"
             return (e1, e2, e3))
        ")"
   s <- stmt
@@ -960,7 +977,7 @@ defstruct = do
   return $ TopDefstruct (Defstruct nm memlst)
 type MemberList = [Slot]
 memberlist :: Parser MemberList
-memberlist = many1 slot
+memberlist = many slot
 data Slot = Slot Typeref Name
                  deriving (Eq, Ord, Show)
 slot :: Parser Slot
@@ -1032,7 +1049,7 @@ data TyperefBase = VOID
                  | STRUCT Ident
                  | UNION Ident
                  | SIGNED TyperefBaseCore
-                 -- | Ident
+                 | USERDEF Ident
                  deriving (Eq, Ord, Show)
 typerefbase :: Parser TyperefBase
 typerefbase = 
@@ -1054,6 +1071,9 @@ typerefbase =
   +++ do
     tp <- typerefbasecore
     return (SIGNED tp)
+  +++ do
+    i <- ident
+    return (USERDEF i)
 data ParamTyperefs = VoidType
             | FixedParamTyperef [ParamTyperef]
             | UnfixedParamTyperef [ParamTyperef]

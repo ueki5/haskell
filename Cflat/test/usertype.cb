@@ -32,6 +32,7 @@ main(int argc, char **argv)
     struct_s st;
     union_u un;
     ints8 ary;
+/*
     intptr ptr = &i;
     msgfunc myputs = puts;
 
@@ -47,6 +48,7 @@ main(int argc, char **argv)
     *ptr = 6;
     printf(";%d", *ptr);
     myputs(";OK");
+*/
     return 0;
 }
 
