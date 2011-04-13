@@ -32,7 +32,6 @@ struct s6 {
     char y;
     char z;
 };
-
 int
 main(int argc, char **argv)
 {
@@ -42,7 +41,6 @@ main(int argc, char **argv)
     printf(";%ld", sizeof(struct s4));
     printf(";%ld", sizeof(struct s5));
     printf(";%ld", sizeof(struct s6));
-
     puts("");
     return 0;
 }
