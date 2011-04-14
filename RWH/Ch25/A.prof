@@ -1,0 +1,31 @@
+	Sun Apr 10 23:17 2011 Time and Allocation Profiling Report  (Final)
+
+	   A +RTS -p -K99999999 -RTS 1e6
+
+	total time  =        0.22 secs   (11 ticks @ 20 ms)
+	total alloc = 200,063,576 bytes  (excludes profiling overheads)
+
+COST CENTRE                    MODULE               %time %alloc
+
+CAF:main_sum                   Main                  63.6   28.0
+CAF                            GHC.Float             36.4   72.0
+
+
+                                                                                               individual    inherited
+COST CENTRE              MODULE                                               no.    entries  %time %alloc   %time %alloc
+
+MAIN                     MAIN                                                   1           0   0.0    0.0   100.0  100.0
+ main                    Main                                                 220           1   0.0    0.0     0.0    0.0
+  mean                   Main                                                 222           1   0.0    0.0     0.0    0.0
+ CAF:main_sum            Main                                                 214           1  63.6   28.0    63.6   28.0
+ CAF:main4               Main                                                 212           1   0.0    0.0     0.0    0.0
+  main                   Main                                                 221           0   0.0    0.0     0.0    0.0
+ CAF                     GHC.Read                                             190           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Float                                            189           2  36.4   72.0    36.4   72.0
+ CAF                     Text.Read.Lex                                        178           8   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Handle.FD                                     150           2   0.0    0.0     0.0    0.0
+ CAF                     System.Posix.Internals                               149           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Conc                                             133           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Handle.Internals                              124           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Encoding.Iconv                                118           5   0.0    0.0     0.0    0.0
+ CAF                     System.Environment                                   111           2   0.0    0.0     0.0    0.0
