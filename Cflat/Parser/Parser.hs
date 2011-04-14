@@ -21,13 +21,6 @@ applyFile f path = bracket
                    case commentoff CommentOff s of
                      Just s' -> return (f s')
                      _       -> return Nothing
-applyFile :: (String -> a) -> FilePath -> IO a
-applyFile f path = bracket 
-                 (openFile path ReadMode) 
-                 hClose 
-                 $ \inh -> do
-                   s <-mainLoop inh
-                   return (f s)
 mainLoop :: Handle -> IO String
 mainLoop inh = do
   ineof <- hIsEOF inh
@@ -69,12 +62,12 @@ item :: Parser Char
 item = Parser $ \inp -> case inp of
   [] -> Nothing
   (c:cs) -> Just (c, cs)
--- ‚Ç‚¿‚ç‚©‚ª¬Œ÷‚µ‚½ê‡‚ÉÌ—p
+-- ã©ã¡ã‚‰ã‹ãŒæˆåŠŸã—ãŸå ´åˆã«æŽ¡ç”¨
 (+++) :: Parser a -> Parser a -> Parser a
 (+++) p q = Parser $ \inp -> case parser p inp of
                       Nothing -> parser q inp
                       Just (v, out) -> Just (v, out)
--- ‘o•û‚ª¬Œ÷‚µA‚©‚ÂÁ”ï‚µ‚½•¶Žš”‚ª“¯‚¶‚¾‚Á‚½ê‡‚ÉÌ—p
+-- åŒæ–¹ãŒæˆåŠŸã—ã€ã‹ã¤æ¶ˆè²»ã—ãŸæ–‡å­—æ•°ãŒåŒã˜ã ã£ãŸå ´åˆã«æŽ¡ç”¨
 (&&&) :: Parser a -> Parser a -> Parser a
 p &&& q = Parser $ \inp -> case parser p inp of
                       Nothing -> Nothing
@@ -126,8 +119,49 @@ token p = do
   cs <- p
   space
   return cs
+
+-- äºˆç´„èªž
+_void = token $ string "void"
+_char = token $ string "char"
+_short = token $ string "short"
+_int = token $ string "int"
+_long = token $ string "long"
+_struct = token $ string "struct"
+_union = token $ string "union"
+_enum = token $ string "enum"
+_static = token $ string "static"
+_extern = token $ string "extern"
+_const = token $ string "const"
+_signed = token $ string "signed"
+_unsigned = token $ string "unsigned"
+_if = token $ string "if"
+_else = token $ string "else"
+_switch = token $ string "switch"
+_case = token $ string "case"
+_default = token $ string "default"
+_while = token $ string "while"
+_do = token $ string "do"
+_for = token $ string "for"
+_return = token $ string "return"
+_break = token $ string "break"
+_continue = token $ string "continue"
+_goto = token $ string "goto"
+_typedef = token $ string "typedef"
+_import = token $ string "import"
+_sizeof = token $ string "sizeof"
+
+-- ind = "    "
+-- ind' 0 = ""
+-- ind' n = ind ++ ind' (n - 1)
+rtn = "\n"
 data AST = AST ImportStmts TopDefs
-                     deriving (Eq, Ord, Show)
+                     deriving (Eq, Ord)
+instance Show AST where
+    show (AST imp defs) = "AST(" ++ rtn
+                          ++ show imp
+                          ++ ","
+                          ++ show defs
+                          ++ ")"
 compilationUnit :: Parser AST
 compilationUnit = do
   imp_stmts <- importStmts
@@ -135,37 +169,46 @@ compilationUnit = do
   return $ AST imp_stmts top_defs
 type ImportStmts =  [ImportStmt]
 data ImportStmt =  Import Names
-                    deriving (Eq, Ord, Show)
+                   deriving (Eq, Ord)
+instance Show ImportStmt where
+    show (Import names) = "Import(" ++ show names ++ ")" ++ rtn
 importStmts ::  Parser ImportStmts
 importStmts =  many importStmt
 importStmt :: Parser ImportStmt
 importStmt = do
-  imp <- token $ string "import"
+  imp <- _import
   nms <- names
   semc <- token $ string ";"
   return $ Import nms
 type Names = [Name] 
 type Name = String
 names :: Parser Names
-names = do  
+names = do
   nm <- name
   nms <- many $ separator "." name
   return (nm:nms)
 name :: Parser Name
 name = ident
 type TopDefs = [TopDef]
-data TopDef = TopDefvars Defvars
+data TopDef = TopDefvar Defvars
             | TopDefun Defun
             | TopDefconst Defconst
             | TopDefstruct Defstruct
             | TopDefunion Defunion
             | TopDeftype Typedef
-             deriving (Eq, Ord, Show)
+             deriving (Eq, Ord)
+instance Show TopDef where
+    show (TopDefvar defvars) = "TopDefvar(" ++ show defvars ++ ")" ++ rtn
+    show (TopDefun defun) = "TopDefun(" ++ show defun ++ ")" ++ rtn
+    show (TopDefconst defconst) = "TopDefConst(" ++ show defconst ++ ")" ++ rtn
+    show (TopDefstruct defstruct) = "Defstruct(" ++ show defstruct ++ ")" ++ rtn
+    show (TopDefunion defunion) = "TopDefunion(" ++ show defunion ++ ")" ++ rtn
+    show (TopDeftype typedef) = "TopDeftype(" ++ show typedef ++ ")" ++ rtn
 topDefs :: Parser [TopDef]
 topDefs = many topDef
 topDef :: Parser TopDef
 topDef = defun
-         +++ topdefvar
+         +++ liftM TopDefvar defvar
          +++ defconst
          +++ defstruct
          +++ defunion
@@ -194,11 +237,11 @@ params =
         +++ return (FixedParam (prm:prms))
     +++
     do
-      v <- void
-      return v
-void = token $ do
-  string "void"
-  return Void
+      v <- _void
+      return Void
+-- void = token $ do
+--   string "void"
+--   return Void
 data Param = Param Typeref Name
              deriving (Eq, Ord, Show)
 param = do
@@ -213,6 +256,9 @@ block = parentheses
               ss <- stmts
               return $ Block lst ss) "}"
 type Defvarlist = [Defvars]
+type Defvars = [Defvar]
+data Defvar = Defvar Storage Typeref Name Value
+             deriving (Eq, Ord, Show)
 defvarlist = many defvar
 defvar = do
   strg <- storage
@@ -236,15 +282,35 @@ data Stmt = BlankLine
           | GotoStmt Name
           | ReturnStmt Expr
           | ReturnVoid
-               deriving (Eq, Ord, Show)
+          deriving (Eq, Ord)
+instance Show Stmt where
+    show BlankLine = "BlankLine" ++ rtn
+    show (LabeledStmt name stmts) = "LabeledStmt:" ++ show name ++ rtn
+                                    ++ "{" ++ show stmts ++ "}"
+    show (StmtExpr e) = "StmtExpr(" ++ show e ++ ")" ++ rtn
+    show (StmtBlock block) = "StmtBlock{" ++ show block ++ "}" ++ rtn
+    show (IfStmt e s1 s2) = "IfStmt(" ++ show e ++ ")" ++ rtn
+                            ++ "then{" ++ show s1 ++ "}" ++ rtn
+                            ++ "else{" ++ show s2 ++ "}"
+    show (WhileStmt e s) = "WhileStmt(" ++ show e ++ ")" ++ rtn
+                           ++ "{" ++ show s ++ "}"
+    show (DoWhileStmt e s) = "DoWhileStmt(" ++ show e ++ ")" ++ rtn
+                             ++ "{" ++  show s ++ "}"
+    show (ForStmt e1 e2 e3 s) = "ForStmt(" ++ show e1 ++ ";" ++ show e2 ++ ";" ++ show e3 ++ ")" ++ rtn
+                                ++ "{" ++ show s ++ "}"
+    show (SwitchStmt e ss) = "SwitchStmt(" ++ show e ++ ")" ++ rtn
+                             ++ show ss
+    show (BreakStmt) = "BreakStmt" ++ rtn
+    show (ContinueStmt) = "ContinueStmt" ++ rtn
+    show (GotoStmt name) = "GotoStmt:" ++ show name ++ rtn
+    show (ReturnStmt e) = "ReturnStmt(" ++ show e ++ ")" ++ rtn
+    show (ReturnVoid) = "ReturnVoid" ++ rtn
 data Expr = ExprAssign Assign
                | ExprOpAssign OpAssign
                | Expr1 Term
                | Expr2 Operator Expr Expr
                | Expr3 Operator Expr Expr Expr
                deriving (Eq, Ord, Show)
-data ExprPair = ExprPair Operator Expr
-             deriving (Eq, Ord, Show)
 stmtbases :: Parser Stmts
 stmtbases = do
   ss <- many stmtbase
@@ -499,11 +565,11 @@ unary =
      t <- term
      return $ AddressOperator t
    +++ do
-     token $ string "sizeof"
+     _sizeof
      tp <- parentheses "(" typeref ")"
      return $ Sizeoftype tp
    +++ do
-     token $ string "sizeof"
+     _sizeof
      u <- unary
      return $ Sizeofunary u
    +++ do
@@ -511,7 +577,11 @@ unary =
      return $ UnaryPostfix  p
 data Postfix = PostfixPrimary Primary
              | PostfixComb Primary [Postfix']
-             deriving (Eq, Ord, Show)
+             deriving (Eq, Ord)
+instance Show Postfix where
+    show (PostfixPrimary p) = "PostfixPrimary:" ++ show p
+    show (PostfixComb p []) = "PostfixComb:" ++ show p
+    show (PostfixComb p (f:fs)) = "PostfixComb:" ++ show p ++ show (f:fs)
 data Postfix' = PostfixPlus
               | PostfixMinus
               | RefArray Expr
@@ -555,15 +625,18 @@ args = do
   es <- many (separator "," expr)
   return $ ArgsExpr (e:es)
   +++ return (ArgsExpr [])
-data Primary = DECIMAL String
-             | UNSIGNEDDECIMAL String
-             | LONGDECIMAL String
-             | UNSIGNEDLONGDECIMAL String
+data Primary = INTEGER String
              | CHARACTER Char
              | STRING String
              | IDENTIFIER Name
              | PRIMARYEXPR Expr
-             deriving (Eq, Ord, Show)
+             deriving (Eq, Ord)
+instance Show Primary where 
+    show (INTEGER s)       = s
+    show (CHARACTER c)     = ('\'':(c:['\'']))
+    show (STRING s)        = show s
+    show (IDENTIFIER name) = name
+    show (PRIMARYEXPR e)   = show e
 primary :: Parser Primary
 primary = integer'
           +++ character
@@ -581,34 +654,31 @@ integer' = octal
 octal = do
   o <- token $ string "0o"
   i <-  token $ many1 digit
-  return $ DECIMAL (o ++ i)
+  return $ INTEGER (o ++ i)
 hexadecimal = do
   h <- token $ string "0x"
   i <-  token $ many1 digit
-  return $ DECIMAL (h ++ i)
+  return $ INTEGER (h ++ i)
 unsignedLongDecimal = do
   i <-  token $ many1 digit
   token $ string "UL"
-  return $ UNSIGNEDLONGDECIMAL i
+  return $ INTEGER i
 longDecimal = do
   i <-  token $ many1 digit
   token $ string "L"
-  return $ LONGDECIMAL i
+  return $ INTEGER i
 unsignedDecimal = do
   i <-  token $ many1 digit
   token $ string "U"
-  return $ UNSIGNEDDECIMAL i
+  return $ INTEGER i
 decimal = do
   i <-  token $ many1 digit
-  return $ DECIMAL i
+  return $ INTEGER i
 character = do
   c <-  parentheses "'" ascii "'"
   return $ CHARACTER c
--- string' = do
---   s <-  parentheses "\"" (many str) "\""
---   return $ STRING s
 data StringStatus = Normal
-                          | InString
+                  | InString
 string' = do
     cs <- string'' Normal
     return $ STRING cs
@@ -632,7 +702,15 @@ string' = do
 identifier = do
   nm <-  token $ name
   return $ IDENTIFIER nm
--- ŽO€‰‰ŽZŽq expr ? expr : expr10
+binExpr :: Parser Expr -> Parser Operator -> Parser Expr -> Parser Expr
+binExpr p1 op p2 = do
+  e1 <- p1
+  do
+    o <- op
+    e2 <- p2
+    return (Expr2 o e1 e2)
+    +++ return e1
+-- ä¸‰é …æ¼”ç®—å­ expr ? expr : expr10
 expr10 :: Parser Expr
 expr10 = do
   e9 <- expr9
@@ -643,111 +721,55 @@ expr10 = do
     e10 <- expr10
     return (Expr3 TernaryOp e9 e e10)
     +++ return e9
--- “ñ€‰‰ŽZŽq ||
-expr9 = do
-  e8 <- expr8
-  do
-    o9 <- operator9
-    e9 <- expr9
-    return (Expr2 o9 e8 e9)
-    +++ return e8
--- “ñ€‰‰ŽZŽq &&
-expr8 = do
-  e7 <- expr7
-  do
-    o8 <- operator8
-    e8 <- expr8
-    return (Expr2 o8 e7 e8)
-    +++ return e7
--- “ñ€‰‰ŽZŽq >,<,>=,<=,==,!=
-expr7 = do
-  e6 <- expr6
-  do
-    o7 <- operator7
-    e7 <- expr7
-    return (Expr2 o7 e6 e7)
-    +++ return e6
--- “ñ€‰‰ŽZŽq |
-expr6 = do
-  e5 <- expr5
-  do
-    o6 <- operator6
-    e6 <- expr6
-    return (Expr2 o6 e5 e6)
-    +++ return e5
--- “ñ€‰‰ŽZŽq ^
-expr5 = do
-  e4 <- expr4
-  do
-    o5 <- operator5
-    e5 <- expr5
-    return (Expr2 o5 e4 e5)
-    +++ return e4
--- “ñ€‰‰ŽZŽq &
-expr4 = do
-  e3 <- expr3
-  do
-    o4 <- operator4
-    e4 <- expr4
-    return (Expr2 o4 e3 e4)
-    +++ return e3
--- “ñ€‰‰ŽZŽq >>,<<
-expr3 :: Parser Expr
-expr3 = do
-  e2 <- expr2
-  do
-    o3 <- operator3
-    e3 <- expr3
-    return (Expr2 o3 e2 e3)
-    +++ return e2
--- “ñ€‰‰ŽZŽq +,-
-expr2 :: Parser Expr
-expr2 = do
-  e1 <- expr1
-  do
-    o2 <- operator2
-    e2 <- expr2
-    return (Expr2 o2 e1 e2)
-    +++ return e1
--- “ñ€‰‰ŽZŽq *,/,%
-expr1 = do
-  t <- term
-  do
-    o1 <- operator1
-    e1 <- expr1
-    return (Expr2 o1 (Expr1 t) e1)
-    +++ return (Expr1 t)
+-- äºŒé …æ¼”ç®—å­ ||
+expr9 = binExpr expr8 operator9 expr9
+-- äºŒé …æ¼”ç®—å­ &&
+expr8 = binExpr expr7 operator8 expr8
+-- äºŒé …æ¼”ç®—å­ >,<,>=,<=,==,!=
+expr7 = binExpr expr6 operator7 expr7
+-- äºŒé …æ¼”ç®—å­ |
+expr6 = binExpr expr5 operator6 expr6
+-- äºŒé …æ¼”ç®—å­ ^
+expr5 = binExpr expr4 operator5 expr5
+-- äºŒé …æ¼”ç®—å­ &
+expr4 = binExpr expr3 operator4 expr4
+-- äºŒé …æ¼”ç®—å­ >>,<<
+expr3 = binExpr expr2 operator3 expr3
+-- äºŒé …æ¼”ç®—å­ +,-
+expr2 = binExpr expr1 operator2 expr2
+-- äºŒé …æ¼”ç®—å­ *,/,%
+expr1 = binExpr (liftM Expr1 term) operator1 expr1
 stmtblock :: Parser Stmt
 stmtblock = do
   blk <- block
   return $ StmtBlock blk
 ifstmt :: Parser Stmt
 ifstmt = do
-  token $ string "if"
+  _if
   e <- parentheses "(" expr ")"
   thenstmt <- stmt
   do
-    token $ string "else"
+    _else
     elsestmt <- stmt
     return $ IfStmt e thenstmt elsestmt
     +++ return (IfStmt e thenstmt BlankLine)
 whilestmt :: Parser Stmt
 whilestmt = do
-  token $ string "while"
+  _while
   e <- parentheses "(" expr ")"
   s <- stmt
   return $ WhileStmt e s
 dowhilestmt :: Parser Stmt
 dowhilestmt = do
-  token $ string "do"
+  _do
   s <- stmt
-  token $ string "while"
+  _while
   e <- parentheses "(" expr ")"
   token $ string ";"
   return $ DoWhileStmt e s
 forstmt :: Parser Stmt
 forstmt = do
-  token $ string "for"
+  _for
   (e1, e2, e3) <- parentheses "(" 
           (do
             e1 <- expr
@@ -761,7 +783,7 @@ forstmt = do
   return $ ForStmt e1 e2 e3 s
 switchstmt :: Parser Stmt
 switchstmt = do
-  token $ string "switch"
+  _switch
   e <- parentheses "(" expr ")"
   cs <- parentheses "{" 
         (do
@@ -769,7 +791,7 @@ switchstmt = do
           do
             d <- defaultclause
             return (cs' ++ [d])
-            +++ return cs') 
+            +++ return cs')
          "}"
   return (SwitchStmt e cs)
 data Constant = Constant Primary
@@ -780,40 +802,45 @@ constant = do
   return $ Constant p
 type CaseClauses = [CaseClause]
 data CaseClause = CaseClause Constant Stmts
-                         | DefaultClause Stmts
-                deriving (Eq, Ord, Show)
+                | DefaultClause Stmts
+                deriving (Eq, Ord)
+instance Show CaseClause where
+    show (CaseClause const stmts) = "Case:" ++ show const ++ rtn
+                                    ++ show stmts
+    show (DefaultClause stmts) = "Default:" ++ rtn
+                                    ++ show stmts
 caseclause :: Parser CaseClause
 caseclause = do
-  token $ string "case"
+  _case
   c <- constant
   token $ string ":"
   s <- stmtbases
   return $ CaseClause c s
 defaultclause :: Parser CaseClause
 defaultclause = do
-  token $ string "default"
+  _default
   token $ string ":"
   s <- stmtbases
   return $ DefaultClause s
 breakstmt :: Parser Stmt
 breakstmt = do
-  token $ string "break"
+  _break
   token $ string ";"
   return BreakStmt
 continuestmt :: Parser Stmt
 continuestmt = do
-  token $ string "continue"
+  _continue
   token $ string ";"
   return ContinueStmt
 gotostmt :: Parser Stmt
 gotostmt = do
-  token $ string "goto"
+  _goto
   nm <- name
   token $ string ";"
   return $ GotoStmt nm
 returnstmt :: Parser Stmt
 returnstmt = do
-  token $ string "return"
+  _return
   do 
     e <- expr
     return $ ReturnStmt e
@@ -824,13 +851,6 @@ parentheses l p r = do
   elm <- p
   token $ string r
   return elm
-type Defvars = [Defvar]
-data Defvar = Defvar Storage Typeref Name Value
-             deriving (Eq, Ord, Show)
-topdefvar :: Parser TopDef
-topdefvar = do
-  var <- defvar
-  return $ TopDefvars var
 separator :: String -> Parser a -> Parser a
 separator spr p = do
   s <- token $ string spr
@@ -841,7 +861,7 @@ data Storage = NoStorage
                deriving (Eq, Ord, Show)
 storage :: Parser Storage
 storage = do
-    strg <- token $ string "static"
+    _static
     return Static
     +++ return NoStorage
 defnamevalue :: Parser (Name,  Value)
@@ -863,7 +883,7 @@ data Defconst = Defconst Typeref Name Expr
                 deriving (Eq, Ord, Show)
 defconst :: Parser TopDef
 defconst = do
-  token $ string "const"
+  _const
   t  <- typeref
   nm <- name
   token $ string "="
@@ -871,10 +891,13 @@ defconst = do
   token $ string ";"
   return (TopDefconst (Defconst t nm e))
 data Defstruct = Defstruct Name MemberList
-                 deriving (Eq, Ord, Show)
+                 deriving (Eq, Ord)
+instance Show Defstruct where
+    show (Defstruct name memlist) = "Defstruct:" ++ show name ++ rtn
+                                  ++ show memlist
 defstruct :: Parser TopDef
 defstruct = do
-  token $ string "struct"
+  _struct
   nm <- name
   memlst <- parentheses "{" memberlist "}"
   token $ string ";"
@@ -883,7 +906,9 @@ type MemberList = [Slot]
 memberlist :: Parser MemberList
 memberlist = many slot
 data Slot = Slot Typeref Name
-                 deriving (Eq, Ord, Show)
+            deriving (Eq, Ord)
+instance Show Slot where
+    show (Slot ty name) = "Slot:" ++ show ty ++ ":" ++ show name ++ rtn
 slot :: Parser Slot
 slot = do
   tp <- typeref
@@ -891,10 +916,13 @@ slot = do
   token $ string ";"
   return $ Slot tp nm
 data Defunion = Defunion Name MemberList
-                 deriving (Eq, Ord, Show)
+                 deriving (Eq, Ord)
+instance Show Defunion where
+    show (Defunion name memlist) = "Defunion:" ++ show name ++ rtn
+                                  ++ show memlist
 defunion :: Parser TopDef
 defunion = do
-  token $ string "union"
+  _union
   nm <- name
   memlst <- parentheses "{" memberlist "}"
   token $ string ";"
@@ -902,7 +930,10 @@ defunion = do
 data Typedef = Typedef Typeref Ident
                  deriving (Eq, Ord, Show)
 data Typeref = Typeref TyperefBase [Modifier]
-               deriving (Eq, Ord, Show)
+               deriving (Eq, Ord)
+instance Show Typeref where
+    show (Typeref b []) = show b 
+    show (Typeref b (m:ms)) = show b ++ show (m:ms)
 typeref :: Parser Typeref
 typeref = do
   tp <- typerefbase
@@ -937,51 +968,64 @@ data TyperefBaseCore = CHAR
                  deriving (Eq, Ord, Show)
 typerefbasecore :: Parser TyperefBaseCore
 typerefbasecore = do
-    (token $ string "char") &&& ident
+    ident &&& _char
     return CHAR
   +++   do
-    (token $ string "short") &&& ident
+    ident &&& _short
     return SHORT
   +++   do
-    (token $ string "int") &&& ident
+    ident &&& _int
     return INT
   +++ do
-    (token $ string "long") &&& ident
+    ident &&& _long
     return LONG
 data TyperefBase = VOID
                  | UNSIGNED TyperefBaseCore
+                 | SIGNED TyperefBaseCore
                  | STRUCT Ident
                  | UNION Ident
-                 | SIGNED TyperefBaseCore
                  | USERDEF Ident
-                 deriving (Eq, Ord, Show)
+                 deriving (Eq, Ord)
+instance Show TyperefBase where
+    show VOID = "VOID"
+    show (UNSIGNED t) = "U:" ++ show t
+    show (SIGNED t)   = show t
+    show (STRUCT i)   = "STRCT:" ++ show i
+    show (UNION i)    = "UNION:" ++ show i
+    show (USERDEF i)  = "USER:" ++ show i
 typerefbase :: Parser TyperefBase
 typerefbase = 
   do
-    (token $ string "void") &&& ident
+    ident &&& _void
     return VOID
   +++ do
-    (token $ string "unsigned") &&& ident
+    ident &&& _unsigned
     tpcore <- typerefbasecore
     return (UNSIGNED tpcore)
-  +++ do
-    (token $ string "struct") &&& ident
-    idnt <- ident
-    return (STRUCT idnt)
-  +++ do
-    (token $ string "union") &&& ident
-    idnt <- ident
-    return (UNION idnt)
   +++ do
     tp <- typerefbasecore
     return (SIGNED tp)
   +++ do
+    ident &&& _struct
+    idnt <- ident
+    return (STRUCT idnt)
+  +++ do
+    ident &&& _union
+    idnt <- ident
+    return (UNION idnt)
+  +++ do
     i <- ident
     return (USERDEF i)
 data ParamTyperefs = VoidType
-            | FixedParamTyperef [ParamTyperef]
-            | UnfixedParamTyperef [ParamTyperef]
-              deriving (Eq, Ord, Show)
+                   | FixedParamTyperef [ParamTyperef]
+                   | UnfixedParamTyperef [ParamTyperef]
+                     deriving (Eq, Ord)
+instance Show ParamTyperefs where
+    show VoidType                     = "VoidType"
+    show (FixedParamTyperef [])       = "FixedParamTyperef"
+    show (FixedParamTyperef (p:ps))   = "FixedParamTyperef:" ++ show (p:ps)
+    show (UnfixedParamTyperef [])     = "UnfixedParamTyperef"
+    show (UnfixedParamTyperef (p:ps)) = "UnfixedParamTyperef:" ++ show (p:ps)
 paramtyperefs :: Parser ParamTyperefs
 paramtyperefs = 
     do 
@@ -996,8 +1040,8 @@ paramtyperefs =
       v <- voidtype
       return v
 voidtype :: Parser ParamTyperefs
-voidtype = token $ do
-  string "void"
+voidtype = do
+  _void
   return VoidType
 data ParamTyperef = ParamTyperef Typeref
              deriving (Eq, Ord, Show)
@@ -1013,7 +1057,7 @@ ident = token $ do
   return $ alpha:alphanums
 typedef :: Parser TopDef
 typedef = do
-  token $ string "typedef"
+  _typedef
   t <- typeref
   i <- ident
   token $ string ";"
