@@ -8,6 +8,7 @@ main(int argc, char **argv)
 
     int i = 1;
     printf("%d", i);
+    {int i = 2;}
     {
         int i = 2;
         printf(";%d", i);
@@ -20,7 +21,6 @@ main(int argc, char **argv)
     }
     printf(";%d", i);
     printf(";%s", addr1 == addr2 ? "OK" : "NG");
-
     puts("");
     return 0;
 }

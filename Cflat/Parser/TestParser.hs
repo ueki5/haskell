@@ -1,13 +1,11 @@
-module Cflat.Parser.TestParser where
+module Main where
 import Cflat.Parser.Parser
 import Cflat.Type.Type
--- import Test.HUnit
 import Test.HUnit
 import Control.Monad.State
 import Control.Exception
 import System.Directory
 import System.Environment
-
 main = do
     getProgName >>= print
     runTestTT test_parse_file

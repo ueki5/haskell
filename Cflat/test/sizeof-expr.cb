@@ -39,7 +39,6 @@ main(int argc, char **argv)
     printf(";%ld", sizeof st);
     printf(";%ld", sizeof u);
     printf(";%ld", sizeof m);
-
     puts("");
     return 0;
 }
