@@ -207,8 +207,8 @@ instance Show TopDef where
 topDefs :: Parser [TopDef]
 topDefs = many topDef
 topDef :: Parser TopDef
-topDef = defun
-         +++ liftM TopDefvar defvar
+topDef = liftM TopDefvar defvar
+         +++ defun
          +++ defconst
          +++ defstruct
          +++ defunion
