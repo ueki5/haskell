@@ -72,8 +72,8 @@ item = Parser $ \inp -> case inp of
 p &&& q = Parser $ \inp -> case parser p inp of
                       Nothing -> Nothing
                       Just (v, out) -> case parser q inp of
-                        Nothing -> Nothing
-                        Just (v', out') -> if length out == length out' then Just (v', out')
+                          Nothing -> Nothing
+                          Just (v', out') -> if length out == length out' then Just (v', out')
                                                       else Nothing
 sat :: (Char -> Bool) -> Parser Char
 sat p = do 
