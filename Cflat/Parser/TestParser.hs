@@ -8,8 +8,8 @@ import System.Directory
 import System.Environment
 main = do
     getProgName >>= print
-    -- runTestTT test_parse_file
-    runTestTT test_string'
+    runTestTT test_parse_file
+    -- runTestTT test_string'
 
 parse_file file = (do
   ret <- parseFile file

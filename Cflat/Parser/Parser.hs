@@ -82,6 +82,46 @@ sat p = do
          else failure
 digit :: Parser Char
 digit = sat isDigit
+octal :: Parser Char
+octal = sat isOctal
+  where 
+    isOctal :: Char -> Bool
+    isOctal '0' = True
+    isOctal '1' = True
+    isOctal '2' = True
+    isOctal '3' = True
+    isOctal '4' = True
+    isOctal '5' = True
+    isOctal '6' = True
+    isOctal '7' = True
+    isOctal _ = False
+hexadecimal :: Parser Char
+hexadecimal = sat isHexadecimal
+  where 
+    isHexadecimal :: Char -> Bool
+    isHexadecimal '0' = True
+    isHexadecimal '1' = True
+    isHexadecimal '2' = True
+    isHexadecimal '3' = True
+    isHexadecimal '4' = True
+    isHexadecimal '5' = True
+    isHexadecimal '6' = True
+    isHexadecimal '7' = True
+    isHexadecimal '8' = True
+    isHexadecimal '9' = True
+    isHexadecimal 'a' = True
+    isHexadecimal 'b' = True
+    isHexadecimal 'c' = True
+    isHexadecimal 'd' = True
+    isHexadecimal 'e' = True
+    isHexadecimal 'f' = True
+    isHexadecimal 'A' = True
+    isHexadecimal 'B' = True
+    isHexadecimal 'C' = True
+    isHexadecimal 'D' = True
+    isHexadecimal 'E' = True
+    isHexadecimal 'F' = True
+    isHexadecimal _ = False
 lower :: Parser Char
 lower = sat isLower
 upper :: Parser Char
@@ -150,9 +190,6 @@ _typedef = token $ string "typedef"
 _import = token $ string "import"
 _sizeof = token $ string "sizeof"
 
--- ind = "    "
--- ind' 0 = ""
--- ind' n = ind ++ ind' (n - 1)
 rtn = "\n"
 data AST = AST ImportStmts TopDefs
                      deriving (Eq, Ord)
@@ -625,16 +662,20 @@ args = do
   es <- many (separator "," expr)
   return $ ArgsExpr (e:es)
   +++ return (ArgsExpr [])
-data Primary = INTEGER String
+data BaseUnit = Octal
+                           | Decimal
+                           | Hexadecimal
+                           deriving (Eq, Ord, Show)
+data Primary = INTEGER BaseUnit TyperefBase String
              | CHARACTER Char
              | STRING String
              | IDENTIFIER Name
              | PRIMARYEXPR Expr
              deriving (Eq, Ord)
 instance Show Primary where 
-    show (INTEGER s)       = s
-    show (CHARACTER c)     = ('\'':(c:['\'']))
-    show (STRING s)        = show s
+    show (INTEGER u ty s) = "(" ++ show u ++ ":" ++ show ty ++ ")" ++ s
+    show (CHARACTER c) = ('\'':(c:['\'']))
+    show (STRING s) = show s
     show (IDENTIFIER name) = name
     show (PRIMARYEXPR e)   = show e
 primary :: Parser Primary
@@ -645,35 +686,33 @@ primary = integer'
           +++ do
             e <- parentheses "("  expr ")"
             return (PRIMARYEXPR e)
-integer' = octal
-           +++ hexadecimal
-           +++ unsignedLongDecimal
-           +++ longDecimal
-           +++ unsignedDecimal
-           +++ decimal
-octal = do
-  o <- token $ string "0o"
-  i <-  token $ many1 digit
-  return $ INTEGER (o ++ i)
-hexadecimal = do
-  h <- token $ string "0x"
-  i <-  token $ many1 digit
-  return $ INTEGER (h ++ i)
-unsignedLongDecimal = do
-  i <-  token $ many1 digit
-  token $ string "UL"
-  return $ INTEGER i
-longDecimal = do
-  i <-  token $ many1 digit
-  token $ string "L"
-  return $ INTEGER i
-unsignedDecimal = do
-  i <-  token $ many1 digit
-  token $ string "U"
-  return $ INTEGER i
-decimal = do
-  i <-  token $ many1 digit
-  return $ INTEGER i
+integer' = do
+    u <- baseUnit
+    i <-  token $ many1 
+          (case u of
+                Octal ->  octal
+                Decimal ->  digit
+                Hexadecimal ->  hexadecimal)
+    t <- typerefbaseSuffix
+    return $ INTEGER u t i
+baseUnit :: Parser BaseUnit
+baseUnit = do
+    token $ string "0o"
+    return Octal
+    +++ do
+    token $ string "0x"
+    return Hexadecimal
+    +++ return Decimal
+typerefbaseSuffix = do
+    token $ string "UL"
+    return (UNSIGNED LONG)
+    +++ do
+    token $ string "L"
+    return (SIGNED LONG)
+    +++ do
+    token $ string "U"
+    return $ (UNSIGNED INT)
+    +++ return (SIGNED INT)
 character = do
   c <-  parentheses "'" ascii "'"
   return $ CHARACTER c

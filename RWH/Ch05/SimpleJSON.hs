@@ -1,4 +1,4 @@
-module Ch05.SimpleJSON
+module RWH.Ch05.SimpleJSON
     (
      JValue(..)
      ,getString
