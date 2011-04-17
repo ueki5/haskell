@@ -99,16 +99,6 @@ hexadecimal :: Parser Char
 hexadecimal = sat isHexadecimal
   where 
     isHexadecimal :: Char -> Bool
-    isHexadecimal '0' = True
-    isHexadecimal '1' = True
-    isHexadecimal '2' = True
-    isHexadecimal '3' = True
-    isHexadecimal '4' = True
-    isHexadecimal '5' = True
-    isHexadecimal '6' = True
-    isHexadecimal '7' = True
-    isHexadecimal '8' = True
-    isHexadecimal '9' = True
     isHexadecimal 'a' = True
     isHexadecimal 'b' = True
     isHexadecimal 'c' = True
@@ -121,7 +111,7 @@ hexadecimal = sat isHexadecimal
     isHexadecimal 'D' = True
     isHexadecimal 'E' = True
     isHexadecimal 'F' = True
-    isHexadecimal _ = False
+    isHexadecimal c = isDigit c
 lower :: Parser Char
 lower = sat isLower
 upper :: Parser Char
