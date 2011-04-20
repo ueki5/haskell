@@ -11,11 +11,6 @@ main = do
     runTestTT test_parse_file
     -- runTestTT test_string'
 
-parse_file file = (do
-  ret <- parseFile file
-  return $ case ret of
-    Nothing -> False
-    _           -> True) @? file
 test_string' = "unit test string'" ~: test [ 
                                   "1" ~: "normal" ~: parser string' "\"aaa\"" ~?= Just (STRING "!aaa","")
                                   ,"2" ~: "escape" ~: parser string' "\"a\\\"aa\"" ~?= Just (STRING "!a\\\"aa","")
@@ -24,6 +19,11 @@ test_string' = "unit test string'" ~: test [
                                   ,"5" ~: "not ended" ~: parser string' "\"aaa" ~?= Nothing
                                   ,"6" ~: "not started" ~: parser string' "aaa\"" ~?= Nothing
                                  ]
+parse_file file = (do
+  ret <- parseFile file
+  return $ case ret of
+    Nothing -> False
+    _           -> True) @? file
 test_parse_file = "parse from file" ~: test [ 
                                  "add" ~:  parse_file "../test/add.cb"
                                  ,"addressof" ~:  parse_file "../test/addressof.cb"

@@ -1,8 +1,9 @@
 module Cflat.Parser.Parser where
 import System.IO
-import Control.Monad
+import Control.Monad(liftM)
 import Control.Exception (bracket)
 import Data.Char
+import Cflat.Type.Type
 
 --parseFile
 parseFile :: FilePath -> IO (Maybe AST)
@@ -30,6 +31,7 @@ mainLoop inh = do
        c <- hGetChar inh 
        cs <- mainLoop inh
        return  (c:cs)
+
 -- Parser
 data Parser a = Parser {execParser::String -> Maybe (a,  String)}
 instance Monad Parser where
@@ -189,6 +191,9 @@ instance Show AST where
                           ++ ","
                           ++ show defs
                           ++ ")"
+instance TypeChecker AST where
+  checkType (AST imps defs) = (foldl (&&) True  (map checkType imps))
+                              && (foldl (&&) True  (map checkType defs))
 compilationUnit :: Parser AST
 compilationUnit = do
   imp_stmts <- importStmts
@@ -199,6 +204,8 @@ data ImportStmt =  Import Names
                    deriving (Eq, Ord)
 instance Show ImportStmt where
     show (Import names) = "Import(" ++ show names ++ ")" ++ rtn
+instance TypeChecker ImportStmt where
+  checkType (Import names) = True
 importStmts ::  Parser ImportStmts
 importStmts =  many importStmt
 importStmt :: Parser ImportStmt
@@ -231,6 +238,14 @@ instance Show TopDef where
     show (TopDefstruct defstruct) = "Defstruct(" ++ show defstruct ++ ")" ++ rtn
     show (TopDefunion defunion) = "TopDefunion(" ++ show defunion ++ ")" ++ rtn
     show (TopDeftype typedef) = "TopDeftype(" ++ show typedef ++ ")" ++ rtn
+instance TypeChecker TopDef where
+    checkType (TopDefvar defvars) = True
+    checkType (TopDefun defun) = True
+    checkType (TopDefconst defconst) = True
+    checkType (TopDefstruct defstruct) = True
+    checkType (TopDefunion defunion) = True
+    checkType (TopDeftype typedef) = True
+  
 topDefs :: Parser [TopDef]
 topDefs = many topDef
 topDef :: Parser TopDef
