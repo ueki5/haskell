@@ -241,14 +241,14 @@ block = parentheses
               lst <- defvarlist
               ss <- stmts
               return $ Block lst ss) "}"
-defvarlist = many defvar
+defvarlist = liftM concat (many defvar)
 defvar = do
   strg <- storage
   tp <- typeref
   valnm <- defnamevalue
   valnms <- many (separator "," defnamevalue)
   token $ string ";"
-  return (map (\(nm,  val) -> (Defvar strg tp nm val)) (valnm:valnms))
+  return  (map (\(nm,  val) -> (Defvar strg tp nm val)) (valnm:valnms))
 stmtbases :: Parser [Stmt]
 stmtbases = do
   ss <- many stmtbase
@@ -491,12 +491,13 @@ postfix' =
     +++ do
       a <- parentheses "(" args ")"
       return (FuncCall a)
-args :: Parser Args
+-- args :: Parser Args
+args :: Parser [Expr]
 args = do
   e <- expr
   es <- many (separator "," expr)
-  return $ ArgsExpr (e:es)
-  +++ return (ArgsExpr [])
+  return $ (e:es)
+  +++ return []
 primary :: Parser Primary
 primary = integer'
           +++ character
@@ -824,10 +825,9 @@ voidtype :: Parser ParamTyperefs
 voidtype = do
   _void
   return VoidType
-paramtyperef :: Parser ParamTyperef
-paramtyperef = do
-  tp <- typeref
-  return $ ParamTyperef tp
+-- paramtyperef :: Parser ParamTyperef
+paramtyperef :: Parser Typeref
+paramtyperef = typeref
 ident :: Parser Ident
 ident = token $ do
   alpha <- letter

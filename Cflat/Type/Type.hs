@@ -9,28 +9,16 @@ data CommentStatus = CommentOff
 
 data AST = AST [ImportStmt] [TopDef]
                      deriving (Eq, Ord)
-instance TypeChecker AST where
-  checkType (AST imps defs) = (foldl (&&) True  (map checkType imps))
-                              && (foldl (&&) True  (map checkType defs))
 data ImportStmt =  Import [Name]
                    deriving (Eq, Ord)
-instance TypeChecker ImportStmt where
-  checkType (Import names) = True
 type Name = String
-data TopDef = TopDefvar Defvars
+data TopDef = TopDefvar [Defvar]
             | TopDefun Defun
             | TopDefconst Defconst
             | TopDefstruct Defstruct
             | TopDefunion Defunion
             | TopDeftype Typedef
              deriving (Eq, Ord)
-instance TypeChecker TopDef where
-    checkType (TopDefvar defvars) = True
-    checkType (TopDefun defun) = True
-    checkType (TopDefconst defconst) = True
-    checkType (TopDefstruct defstruct) = True
-    checkType (TopDefunion defunion) = True
-    checkType (TopDeftype typedef) = True
 data Defun = Defun  Storage Typeref Name Params Block
              deriving (Eq, Ord, Show)
 data Params = Void
@@ -39,13 +27,10 @@ data Params = Void
               deriving (Eq, Ord, Show)
 data Param = Param Typeref Name
              deriving (Eq, Ord, Show)
-data Block = Block Defvarlist [Stmt]
+data Block = Block [Defvar] [Stmt]
                deriving (Eq, Ord, Show)
-type Defvarlist = [Defvars]
-type Defvars = [Defvar]
 data Defvar = Defvar Storage Typeref Name Value
              deriving (Eq, Ord, Show)
--- type Stmts = [Stmt]
 data Stmt = BlankLine
           | LabeledStmt Name [Stmt]
           | StmtExpr Expr
@@ -54,35 +39,14 @@ data Stmt = BlankLine
           | WhileStmt Expr Stmt
           | DoWhileStmt Expr Stmt
           | ForStmt Expr Expr Expr Stmt
-          | SwitchStmt Expr CaseClauses
+          | SwitchStmt Expr [CaseClause]
           | BreakStmt
           | ContinueStmt 
           | GotoStmt Name
           | ReturnStmt Expr
           | ReturnVoid
           deriving (Eq, Ord)
-instance Show Stmt where
-    show BlankLine = "BlankLine" ++ rtn
-    show (LabeledStmt name stmts) = "LabeledStmt:" ++ show name ++ rtn
-                                    ++ "{" ++ show stmts ++ "}"
-    show (StmtExpr e) = "StmtExpr(" ++ show e ++ ")" ++ rtn
-    show (StmtBlock block) = "StmtBlock{" ++ show block ++ "}" ++ rtn
-    show (IfStmt e s1 s2) = "IfStmt(" ++ show e ++ ")" ++ rtn
-                            ++ "then{" ++ show s1 ++ "}" ++ rtn
-                            ++ "else{" ++ show s2 ++ "}"
-    show (WhileStmt e s) = "WhileStmt(" ++ show e ++ ")" ++ rtn
-                           ++ "{" ++ show s ++ "}"
-    show (DoWhileStmt e s) = "DoWhileStmt(" ++ show e ++ ")" ++ rtn
-                             ++ "{" ++  show s ++ "}"
-    show (ForStmt e1 e2 e3 s) = "ForStmt(" ++ show e1 ++ ";" ++ show e2 ++ ";" ++ show e3 ++ ")" ++ rtn
-                                ++ "{" ++ show s ++ "}"
-    show (SwitchStmt e ss) = "SwitchStmt(" ++ show e ++ ")" ++ rtn
-                             ++ show ss
-    show (BreakStmt) = "BreakStmt" ++ rtn
-    show (ContinueStmt) = "ContinueStmt" ++ rtn
-    show (GotoStmt name) = "GotoStmt:" ++ show name ++ rtn
-    show (ReturnStmt e) = "ReturnStmt(" ++ show e ++ ")" ++ rtn
-    show (ReturnVoid) = "ReturnVoid" ++ rtn
+
 data Expr = ExprAssign Assign
                | ExprOpAssign OpAssign
                | Expr1 Term
@@ -142,19 +106,13 @@ data Unary = PrefixPlus Unary
 data Postfix = PostfixPrimary Primary
              | PostfixComb Primary [Postfix']
              deriving (Eq, Ord)
-instance Show Postfix where
-    show (PostfixPrimary p) = "PostfixPrimary:" ++ show p
-    show (PostfixComb p []) = "PostfixComb:" ++ show p
-    show (PostfixComb p (f:fs)) = "PostfixComb:" ++ show p ++ show (f:fs)
 data Postfix' = PostfixPlus
               | PostfixMinus
               | RefArray Expr
               | RefMember Name
               | RefByPointer Name
-              | FuncCall Args
+              | FuncCall [Expr]
              deriving (Eq, Ord, Show)
-data Args = ArgsExpr [Expr]
-            deriving (Eq, Ord, Show)
 data BaseUnit = Octal
                            | Decimal
                            | Hexadecimal
@@ -165,25 +123,13 @@ data Primary = INTEGER BaseUnit TyperefBase String
              | IDENTIFIER Name
              | PRIMARYEXPR Expr
              deriving (Eq, Ord)
-instance Show Primary where 
-    show (INTEGER u ty s) = "(" ++ show u ++ ":" ++ show ty ++ ")" ++ s
-    show (CHARACTER c) = ('\'':(c:['\'']))
-    show (STRING s) = show s
-    show (IDENTIFIER name) = name
-    show (PRIMARYEXPR e)   = show e
 data StringStatus = Normal
                   | InString
 data Constant = Constant Primary
                 deriving (Eq, Ord, Show)
-type CaseClauses = [CaseClause]
 data CaseClause = CaseClause Constant [Stmt]
                 | DefaultClause [Stmt]
                 deriving (Eq, Ord)
-instance Show CaseClause where
-    show (CaseClause const stmts) = "Case:" ++ show const ++ rtn
-                                    ++ show stmts
-    show (DefaultClause stmts) = "Default:" ++ rtn
-                                    ++ show stmts
 data Storage = NoStorage
                     | Static
                deriving (Eq, Ord, Show)
@@ -194,36 +140,14 @@ data Defconst = Defconst Typeref Name Expr
                 deriving (Eq, Ord, Show)
 data Defstruct = Defstruct Name [Slot]
                  deriving (Eq, Ord)
-instance Show Defstruct where
-    show (Defstruct name memlist) = "Defstruct:" ++ show name ++ rtn
-                                  ++ show memlist
--- type MemberList = [Slot]
 data Slot = Slot Typeref Name
             deriving (Eq, Ord)
-instance Show Slot where
-    show (Slot ty name) = "Slot:" ++ show ty ++ ":" ++ show name ++ rtn
 data Defunion = Defunion Name [Slot]
                  deriving (Eq, Ord)
-instance Show Defunion where
-    show (Defunion name memlist) = "Defunion:" ++ show name ++ rtn
-                                  ++ show memlist
 data Typedef = Typedef Typeref Ident
                  deriving (Eq, Ord, Show)
 data Typeref = Typeref TyperefBase [Modifier]
                deriving (Eq, Ord)
-instance Show Typeref where
-    show (Typeref b []) = show b 
-    show (Typeref b (m:ms)) = show b ++ show (m:ms)
-data Modifier = ArrayLengthNotSpecified
-              | ArrayLengthSpecified Int
-              | Pointer
-              | FunctionPointer ParamTyperefs
-                 deriving (Eq, Ord, Show)
-data TyperefBaseCore = CHAR
-                 | SHORT
-                 | INT
-                 | LONG
-                 deriving (Eq, Ord, Show)
 type Ident = String
 data TyperefBase = VOID
                  | UNSIGNED TyperefBaseCore
@@ -232,6 +156,103 @@ data TyperefBase = VOID
                  | UNION Ident
                  | USERDEF Ident
                  deriving (Eq, Ord)
+data TyperefBaseCore = CHAR
+                 | SHORT
+                 | INT
+                 | LONG
+                 deriving (Eq, Ord, Show)
+data Modifier = ArrayLengthNotSpecified
+              | ArrayLengthSpecified Int
+              | Pointer
+              | FunctionPointer ParamTyperefs
+                 deriving (Eq, Ord, Show)
+data ParamTyperefs = VoidType
+--                    | FixedParamTyperef [ParamTyperef]
+--                    | UnfixedParamTyperef [ParamTyperef]
+                   | FixedParamTyperef [Typeref]
+                   | UnfixedParamTyperef [Typeref]
+                     deriving (Eq, Ord)
+-- data ParamTyperef = ParamTyperef Typeref
+--              deriving (Eq, Ord, Show)
+
+-- TypeChecker
+instance TypeChecker AST where
+  checkType (AST imps defs) = (foldl (&&) True  (map checkType imps))
+                              && (foldl (&&) True  (map checkType defs))
+instance TypeChecker ImportStmt where
+  checkType (Import names) = True
+instance TypeChecker TopDef where
+    checkType (TopDefvar defvars) = True
+    checkType (TopDefun defun) = True
+    checkType (TopDefconst defconst) = True
+    checkType (TopDefstruct defstruct) = True
+    checkType (TopDefunion defunion) = True
+    checkType (TopDeftype typedef) = True
+
+-- Show
+instance Show AST where
+    show (AST imp defs) = "AST(" ++ rtn
+                          ++ show imp
+                          ++ ","
+                          ++ show defs
+                          ++ ")"
+instance Show ImportStmt where
+    show (Import names) = "Import(" ++ show names ++ ")" ++ rtn
+instance Show TopDef where
+    show (TopDefvar defvars) = "TopDefvar(" ++ show defvars ++ ")" ++ rtn
+    show (TopDefun defun) = "TopDefun(" ++ show defun ++ ")" ++ rtn
+    show (TopDefconst defconst) = "TopDefConst(" ++ show defconst ++ ")" ++ rtn
+    show (TopDefstruct defstruct) = "Defstruct(" ++ show defstruct ++ ")" ++ rtn
+    show (TopDefunion defunion) = "TopDefunion(" ++ show defunion ++ ")" ++ rtn
+    show (TopDeftype typedef) = "TopDeftype(" ++ show typedef ++ ")" ++ rtn
+instance Show Stmt where
+    show BlankLine = "BlankLine" ++ rtn
+    show (LabeledStmt name stmts) = "LabeledStmt:" ++ show name ++ rtn
+                                    ++ "{" ++ show stmts ++ "}"
+    show (StmtExpr e) = "StmtExpr(" ++ show e ++ ")" ++ rtn
+    show (StmtBlock block) = "StmtBlock{" ++ show block ++ "}" ++ rtn
+    show (IfStmt e s1 s2) = "IfStmt(" ++ show e ++ ")" ++ rtn
+                            ++ "then{" ++ show s1 ++ "}" ++ rtn
+                            ++ "else{" ++ show s2 ++ "}"
+    show (WhileStmt e s) = "WhileStmt(" ++ show e ++ ")" ++ rtn
+                           ++ "{" ++ show s ++ "}"
+    show (DoWhileStmt e s) = "DoWhileStmt(" ++ show e ++ ")" ++ rtn
+                             ++ "{" ++  show s ++ "}"
+    show (ForStmt e1 e2 e3 s) = "ForStmt(" ++ show e1 ++ ";" ++ show e2 ++ ";" ++ show e3 ++ ")" ++ rtn
+                                ++ "{" ++ show s ++ "}"
+    show (SwitchStmt e ss) = "SwitchStmt(" ++ show e ++ ")" ++ rtn
+                             ++ show ss
+    show (BreakStmt) = "BreakStmt" ++ rtn
+    show (ContinueStmt) = "ContinueStmt" ++ rtn
+    show (GotoStmt name) = "GotoStmt:" ++ show name ++ rtn
+    show (ReturnStmt e) = "ReturnStmt(" ++ show e ++ ")" ++ rtn
+    show (ReturnVoid) = "ReturnVoid" ++ rtn
+instance Show Postfix where
+    show (PostfixPrimary p) = "PostfixPrimary:" ++ show p
+    show (PostfixComb p []) = "PostfixComb:" ++ show p
+    show (PostfixComb p (f:fs)) = "PostfixComb:" ++ show p ++ show (f:fs)
+instance Show Primary where 
+    show (INTEGER u ty s) = "(" ++ show u ++ ":" ++ show ty ++ ")" ++ s
+    show (CHARACTER c) = ('\'':(c:['\'']))
+    show (STRING s) = show s
+    show (IDENTIFIER name) = name
+    show (PRIMARYEXPR e)   = show e
+instance Show CaseClause where
+    show (CaseClause const stmts) = "Case:" ++ show const ++ rtn
+                                    ++ show stmts
+    show (DefaultClause stmts) = "Default:" ++ rtn
+                                    ++ show stmts
+instance Show Defstruct where
+    show (Defstruct name memlist) = "Defstruct:" ++ show name ++ rtn
+                                  ++ show memlist
+instance Show Slot where
+    show (Slot ty name) = "Slot:" ++ show ty ++ ":" ++ show name ++ rtn
+instance Show Defunion where
+    show (Defunion name memlist) = "Defunion:" ++ show name ++ rtn
+                                  ++ show memlist
+instance Show Typeref where
+    show (Typeref b []) = show b 
+    show (Typeref b (m:ms)) = show b ++ show (m:ms)
 instance Show TyperefBase where
     show VOID = "VOID"
     show (UNSIGNED t) = "U:" ++ show t
@@ -239,15 +260,9 @@ instance Show TyperefBase where
     show (STRUCT i)   = "STRCT:" ++ show i
     show (UNION i)    = "UNION:" ++ show i
     show (USERDEF i)  = "USER:" ++ show i
-data ParamTyperefs = VoidType
-                   | FixedParamTyperef [ParamTyperef]
-                   | UnfixedParamTyperef [ParamTyperef]
-                     deriving (Eq, Ord)
 instance Show ParamTyperefs where
     show VoidType                     = "VoidType"
     show (FixedParamTyperef [])       = "FixedParamTyperef"
     show (FixedParamTyperef (p:ps))   = "FixedParamTyperef:" ++ show (p:ps)
     show (UnfixedParamTyperef [])     = "UnfixedParamTyperef"
     show (UnfixedParamTyperef (p:ps)) = "UnfixedParamTyperef:" ++ show (p:ps)
-data ParamTyperef = ParamTyperef Typeref
-             deriving (Eq, Ord, Show)
