@@ -167,12 +167,14 @@ data Modifier = ArrayLengthNotSpecified
               | FunctionPointer ParamTyperefs
                  deriving (Eq, Ord, Show)
 data ParamTyperefs = VoidType
---                    | FixedParamTyperef [ParamTyperef]
---                    | UnfixedParamTyperef [ParamTyperef]
                    | FixedParamTyperef [Typeref]
                    | UnfixedParamTyperef [Typeref]
                      deriving (Eq, Ord)
--- data ParamTyperef = ParamTyperef Typeref
+-- data Params = Void
+--             | FixedParam [Param]
+--             | UnfixedParam [Param]
+--               deriving (Eq, Ord, Show)
+-- data Param = Param Typeref Name
 --              deriving (Eq, Ord, Show)
 
 -- TypeChecker
