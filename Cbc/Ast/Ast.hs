@@ -1,25 +1,31 @@
-package net.loveruby.cflat.ast;
-import net.loveruby.cflat.entity.*;
-import net.loveruby.cflat.ir.IR;
-import java.util.List;
-import java.util.ArrayList;
-import java.io.PrintStream;
+module Cbc.Ast.Ast where
+inport Cbc.Ast.Node
+-- package net.loveruby.cflat.ast;
+-- import net.loveruby.cflat.entity.*;
+-- import net.loveruby.cflat.ir.IR;
+-- import java.util.List;
+-- import java.util.ArrayList;
+-- import java.io.PrintStream;
 
-public class AST extends Node {
-    protected Location source;
-    protected Declarations declarations;
-    protected ToplevelScope scope;
-    protected ConstantTable constantTable;
+data Ast = Ast {node :: Node 
+                        declarations :: Declarations
+                        scope :: ToplevelScope
+                        constantTable :: ConstantTable}
+-- public class Ast extends Node {
+--     protected Location source;
+--     protected Declarations declarations;
+--     protected ToplevelScope scope;
+--     protected ConstantTable constantTable;
 
-    public AST(Location source, Declarations declarations) {
-        super();
-        this.source = source;
-        this.declarations = declarations;
-    }
+--     public Ast(Location source, Declarations declarations) {
+--         super();
+--         this.source = source;
+--         this.declarations = declarations;
+--     }
 
-    public Location location() {
-        return source;
-    }
+    -- public Location location() {
+    --     return source;
+    -- }
 
     public List<TypeDefinition> types() {
         List<TypeDefinition> result = new ArrayList<TypeDefinition>();
@@ -76,7 +82,7 @@ public class AST extends Node {
 
     public ToplevelScope scope() {
         if (this.scope == null) {
-            throw new Error("must not happen: AST.scope is null");
+            throw new Error("must not happen: Ast.scope is null");
         }
         return scope;
     }
@@ -91,7 +97,7 @@ public class AST extends Node {
 
     public ConstantTable constantTable() {
         if (this.constantTable == null) {
-            throw new Error("must not happen: AST.constantTable is null");
+            throw new Error("must not happen: Ast.constantTable is null");
         }
         return constantTable;
     }

@@ -1,24 +1,28 @@
-package net.loveruby.cflat.ast;
-import java.io.PrintStream;
+module Cbc.Ast.Node where
+import Cbc.Ast.Dumpable
+-- import java.io.PrintStream;
 
-abstract public class Node implements Dumpable {
-    public Node() {
-    }
+data Node = Node  {location :: String } deriving Show
+instance Dumpable Node where
+  dump = show
+-- abstract public class Node implements Dumpable {
+--     public Node() {
+--     }
 
-    abstract public Location location();
+--     abstract public Location location();
 
-    public void dump() {
-        dump(System.out);
-    }
+--     public void dump() {
+--         dump(System.out);
+--     }
 
-    public void dump(PrintStream s) {
-        dump(new Dumper(s));
-    }
+--     public void dump(PrintStream s) {
+--         dump(new Dumper(s));
+--     }
 
-    public void dump(Dumper d) {
-        d.printClass(this, location());
-        _dump(d);
-    }
+--     public void dump(Dumper d) {
+--         d.printClass(this, location());
+--         _dump(d);
+--     }
 
-    abstract protected void _dump(Dumper d);
-}
+--     abstract protected void _dump(Dumper d);
+-- }

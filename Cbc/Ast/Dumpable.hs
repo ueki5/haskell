@@ -1,5 +1,8 @@
-package net.loveruby.cflat.ast;
+module Cbc.Ast.Dumpable where
+-- package net.loveruby.cflat.ast;
 
-public interface Dumpable {
-    void dump(Dumper d);
-}
+class Dumpable a where
+  dump :: a -> String
+-- public interface Dumpable {
+--     void dump(Dumper d);
+-- }
